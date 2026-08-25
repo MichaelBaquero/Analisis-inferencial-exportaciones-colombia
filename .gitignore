@@ -1,0 +1,23 @@
+# Datos - no se versionan por tamaño/sensibilidad
+Data/*.xlsx
+Data/*.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# LaTeX (archivos auxiliares de compilación, no el .tex fuente)
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+
+# VS Code
+.vscode/
+
+# Sistema
+.DS_Store
+Thumbs.db
