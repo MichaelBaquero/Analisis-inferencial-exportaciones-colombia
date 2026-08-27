@@ -1,1 +1,149 @@
-% Este documento aun no se encuentra en desarrollo
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}      
+\usepackage{listings}      
+\usepackage{xcolor}
+\usepackage{graphicx}      
+\usepackage{hyperref}
+
+% ============================================================
+% Configuración de bloques de código (para el Apéndice)
+% ============================================================
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{teal},
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    breaklines=true,
+    showstringspaces=false
+}
+
+% ============================================================
+% Portada
+% ============================================================
+% TODO (Angie): completar título definitivo, nombres del equipo,
+% asignatura y fecha.
+\title{[Título tentativo del proyecto]}
+\author{Angie Montero \and Michael Baquero}
+\date{Analítica Descriptiva II -- Unicafam \\ Agosto 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+% Resumen (Abstract)
+% ============================================================
+% TODO: se redacta al final, cuando ya haya resultados (150-250 palabras).
+% No aplica todavía para el Avance 1.
+
+% ============================================================
+% 1. Introducción
+% ============================================================
+% TODO (Angie): Contexto (2 párrafos, mínimo 2 referencias),
+% Problema + pregunta de investigación, Objetivos (1 general + 3-4
+% específicos), Justificación y alcance.
+\section{Introducción}
+
+
+
+% ============================================================
+% 2. Descripción del dataset
+% ============================================================
+% Sección a cargo de Michael.
+\section{Descripción del dataset}
+
+Los datos utilizados en este estudio provienen de la base de
+\textbf{Estadísticas de Comercio Exterior -- Exportaciones}, publicada
+por la Dirección de Impuestos y Aduanas Nacionales (DIAN), validada y
+certificada por el Departamento Administrativo Nacional de Estadística
+(DANE). Corresponde al mes de junio de 2026 y fue descargada el 12 de
+agosto de 2026 desde
+\url{https://www.dian.gov.co/dian/cifras/Paginas/EstadisticasComEx.aspx}.
+
+El archivo original contiene 103.179 registros y 72 variables, tal como
+se resume en la Tabla~\ref{tab:resumen_original}.
+
+\input{anexos/tabla_resumen_original}
+
+% TODO: párrafo explicando en texto por qué se exploraron las variables
+% categóricas antes de seleccionar columnas (ver Tabla categorías).
+Para determinar qué variables categóricas eran adecuadas para las
+pruebas de hipótesis del proyecto, se exploró el número de categorías
+únicas de las variables candidatas (Tabla~\ref{tab:categoricas}).
+
+\input{anexos/tabla_categoricas}
+
+% TODO: párrafo justificando la exclusión de PAIS_DESTINO_FINAL
+% (173 categorías) y la selección final de las 11 variables.
+Con base en este análisis, se excluyó la variable
+\texttt{PAIS\_DESTINO\_FINAL} por presentar 173 categorías únicas, lo
+cual la hace inviable para pruebas de hipótesis del tipo chi-cuadrado.
+Las variables seleccionadas para el desarrollo del proyecto se
+presentan en la Tabla~\ref{tab:variables_seleccionadas}.
+
+\input{anexos/tabla_variables_seleccionadas}
+
+% TODO: párrafo justificando el tamaño y método de muestreo (1500,
+% aleatorio simple, random_state=42 para reproducibilidad).
+Dado el volumen del dataset filtrado, se optó por trabajar con una
+muestra aleatoria simple de 1.500 registros (semilla fija
+\texttt{random\_state=42} para garantizar reproducibilidad), con el
+fin de evitar sobrecargar el modelo de regresión lineal y reducir los
+tiempos de ejecución. La comparación de dimensiones se muestra en la
+Tabla~\ref{tab:dimensiones_muestra}.
+
+\input{anexos/tabla_dimensiones_muestra}
+
+A modo de ejemplo, la Tabla~\ref{tab:muestra_head} presenta las
+primeras cinco filas de la muestra de trabajo.
+
+\input{anexos/tabla_muestra_head}
+
+
+% ============================================================
+% 3. Análisis exploratorio (EDA)
+% ============================================================
+\section{Análisis exploratorio}
+
+% TODO (Angie): tabla de estadística descriptiva (media, mediana,
+% desviación estándar, mínimo, máximo, asimetría) + su interpretación.
+\subsection{Estadística descriptiva}
+
+
+% TODO (Angie): mínimo 2 visualizaciones con interpretación escrita.
+\subsection{Visualizaciones}
+
+
+% TODO (Michael): verificación de normalidad (Shapiro-Wilk + gráfico Q-Q)
+% para al menos una variable cuantitativa.
+\subsection{Verificación de normalidad}
+
+
+
+% ============================================================
+% Referencias
+% ============================================================
+% TODO (Michael): mínimo 4 referencias APA 7ª ed. (2 académicas + 2 de
+% fuentes de datos).
+\section*{Referencias}
+
+
+
+% ============================================================
+% Apéndices
+% ============================================================
+\appendix
+\section{Apéndice: Código fuente}
+
+% TODO (Michael): pegar aquí el contenido de eda_exportaciones.py
+% usando \lstinputlisting o \begin{lstlisting}...\end{lstlisting}
+\lstinputlisting[language=Python]{../eda_exportaciones.py}
+
+\end{document}
