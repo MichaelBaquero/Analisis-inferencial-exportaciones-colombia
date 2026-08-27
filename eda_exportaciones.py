@@ -3,11 +3,15 @@
 # Avance 1: EDA - Exportaciones Colombia (DIAN, Junio 2026)
 # Fuente: https://www.dian.gov.co/dian/cifras/Paginas/EstadisticasComEx.aspx
 # Fecha de descarga del archivo: 12/08/2026
+# Equipo: Angie Montero, Michael Baquero
 # ============================================================
 
 # Importe de librerías
 import pandas as pd
 import dataframe_image as dfi
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import shapiro, probplot, skew
 
 # Lectura del documento
 df = pd.read_excel("Data/06_Exportaciones_2026_Junio.xlsx")
@@ -20,10 +24,10 @@ print('Visualización de primeras filas:\n', df.head(5))
 print('\nVisualización de las dimensiones: ', df.shape)
 print(df.info())
 
-# ------------------------------------------------------------------
-# 1. Exportación: resumen del dataset ORIGINAL (dimensiones y tipos de dato)
-# Nota: Se usa .style.hide(axis='index') porque dataframe_image no soporta index=False.
-# ------------------------------------------------------------------
+# Exportación: resumen del dataset ORIGINAL (dimensiones y tipos de dato)
+# para incluir en la sección de Descripción del dataset del artículo.
+# Se usa .style.hide(axis='index') porque dataframe_image no soporta
+# el parámetro index=False que sí acepta to_latex().
 resumen_original = pd.DataFrame({
     "Dataset": ["Original"],
     "Filas": [df.shape[0]],
@@ -31,7 +35,8 @@ resumen_original = pd.DataFrame({
     "Columnas numéricas": [df.select_dtypes(include="number").shape[1]],
     "Columnas categóricas/texto": [df.select_dtypes(include="object").shape[1]]
 })
-dfi.export(resumen_original.style.hide(axis='index'), "Doc/anexos/tabla_resumen_original.png")
+dfi.export(resumen_original.style.hide(axis='index'),
+           "Doc/anexos/tabla_resumen_original.png")
 
 # Exploración preliminar de variables categóricas candidatas, ANTES de
 # decidir cuáles incluir en el análisis. Se revisan sobre el dataset
@@ -47,17 +52,16 @@ categoricas_candidatas = [
 for col in categoricas_candidatas:
     print(col, "->", df[col].nunique(), "categorías únicas")
 
-# ------------------------------------------------------------------
-# 2. Exportación: número de categorías únicas por variable categórica candidata.
+# Exportación: número de categorías únicas por variable categórica candidata.
 # Esta tabla es la evidencia que sustenta la exclusión de PAIS_DESTINO_FINAL
 # (173 categorías, inviable para pruebas de hipótesis tipo chi-cuadrado)
 # frente a las demás variables categóricas, que sí son manejables.
-# ------------------------------------------------------------------
 resumen_categoricas = pd.DataFrame({
     "Variable": categoricas_candidatas,
     "Categorías únicas": [df[col].nunique() for col in categoricas_candidatas]
 })
-dfi.export(resumen_categoricas.style.hide(axis='index'), "Doc/anexos/tabla_categoricas.png")
+dfi.export(resumen_categoricas.style.hide(axis='index'),
+           "Doc/anexos/tabla_categoricas.png")
 
 # Con base en la exploración anterior, se realiza el filtro de columnas
 # categóricas y numéricas apropiadas para orientar el desarrollo de la
@@ -79,12 +83,9 @@ columnas_relevantes = [
 ]
 df_filtrado = df[columnas_relevantes]
 
-# ------------------------------------------------------------------
-# RENOMBRADO DE COLUMNAS
 # Se renombran las variables a nombres cortos y legibles antes de exportar
-# las imágenes, para evitar que los nombres técnicos desborden
-# el ancho de la página del documento LaTeX.
-# ------------------------------------------------------------------
+# las imágenes, para evitar que los nombres técnicos desborden el ancho
+# de la página del documento LaTeX.
 renombres = {
     "VALOR_FOB_USD": "Valor FOB (USD)",
     "PESO_NETO_KGS": "Peso Neto (Kg)",
@@ -100,12 +101,9 @@ renombres = {
 }
 df_filtrado = df_filtrado.rename(columns=renombres)
 
-# ------------------------------------------------------------------
-# DESCRIPCIONES TÉCNICAS DE LAS VARIABLES
-# Se crea un diccionario con la descripción semántica de cada variable
-# para llenar automáticamente la columna "Descripción" en la tabla
-# de variables seleccionadas.
-# ------------------------------------------------------------------
+# Diccionario con la descripción semántica de cada variable, usado para
+# llenar automáticamente la columna "Descripción" en la tabla de
+# variables seleccionadas.
 descripciones = {
     "VALOR_FOB_USD": "Valor de la mercancía en dólares (FOB: Free On Board, sin fletes ni seguros).",
     "PESO_NETO_KGS": "Peso neto de la mercancía en kilogramos (sin incluir embalaje).",
@@ -120,72 +118,119 @@ descripciones = {
     "TIPO_DE_EMBARQUE": "Tipo de embarque (único, consolidado, etc.)."
 }
 
-# ------------------------------------------------------------------
-# 3. Exportación: tabla de variables seleccionadas (nombre, tipo y descripción).
-# La descripción se llena automáticamente gracias al diccionario creado arriba.
-# ------------------------------------------------------------------
+# Exportación: tabla de variables seleccionadas (nombre, tipo y descripción).
 tabla_variables = pd.DataFrame({
     "Variable": [renombres[col] for col in columnas_relevantes],
     "Tipo": [str(df_filtrado[col].dtype) for col in df_filtrado.columns],
     "Descripción": [descripciones[col] for col in columnas_relevantes]
 })
-dfi.export(tabla_variables.style.hide(axis='index'), "Doc/anexos/tabla_variables_seleccionadas.png")
+dfi.export(tabla_variables.style.hide(axis='index'),
+           "Doc/anexos/tabla_variables_seleccionadas.png")
 
 # Se validan valores nulos para columnas seleccionadas
 print('\nVisualización de valores nulos:\n', df_filtrado.isnull().sum())
 
-# ------------------------------------------------------------------
-# 4. MUESTRA DE TRABAJO
 # Con fines de optimizar el código y evitar saturación en el modelo de
 # regresión lineal:
 # - Se delimita una muestra de 1500 registros para el desarrollo del proyecto
 # - random_state=42 fija la semilla para garantizar reproducibilidad
-# - .reset_index(drop=True) reinicia los índices para que la tabla final
-#   muestre una secuencia limpia (0, 1, 2, 3, 4) en lugar de índices aleatorios.
-# ------------------------------------------------------------------
+# - reset_index(drop=True) reinicia los índices para que la tabla final
+#   muestre una secuencia limpia (0, 1, 2, 3, 4) en lugar de índices aleatorios
 df_muestra = df_filtrado.sample(n=1500, random_state=42).reset_index(drop=True)
 print('\nVisualización de las nuevas dimensiones: ', df_muestra.shape)
 print('\nVisualización de primeras filas:\n', df_muestra.head(5))
 
-# ------------------------------------------------------------------
-# 5. Exportación: comparación de dimensiones dataset original vs. muestra.
+# Exportación: comparación de dimensiones dataset original vs. muestra.
 # Sustenta la justificación del volumen y técnica de muestreo en el texto.
-# ------------------------------------------------------------------
 resumen_muestra = pd.DataFrame({
     "Dataset": ["Original (filtrado)", "Muestra de trabajo"],
     "Filas": [df_filtrado.shape[0], df_muestra.shape[0]],
     "Columnas": [df_filtrado.shape[1], df_muestra.shape[1]]
 })
-dfi.export(resumen_muestra.style.hide(axis='index'), "Doc/anexos/tabla_dimensiones_muestra.png")
+dfi.export(resumen_muestra.style.hide(axis='index'),
+           "Doc/anexos/tabla_dimensiones_muestra.png")
 
-# ------------------------------------------------------------------
-# 6. Exportación: primeras filas de la muestra final.
-# Se redondea a 2 decimales para que la imagen se vea más limpia.
-# (Se deja el índice visible 0, 1, 2, 3, 4 tal como se acordó para la muestra).
-# ------------------------------------------------------------------
+# Exportación: primeras filas de la muestra final, redondeada a 2 decimales
+# para que la imagen se vea más limpia.
 muestra_head = df_muestra.head(5).round(2)
 dfi.export(muestra_head, "Doc/anexos/tabla_muestra_head.png")
 
 
-# ============================================================
-# TODOs pendientes para el siguiente avance
-# ============================================================
-"""
-TODO (Angie): Estadísticas descriptivas y visualizaciones
+# Sección a cargo de Angie: estadística descriptiva y visualizaciones
+# sobre las variables numéricas de df_muestra.
 
-Continuar el desarrollo del EDA sobre df_muestra:
+# Estadística descriptiva de las variables numéricas: se calcula con
+# describe() y se agrega la asimetría (skew), que describe() no incluye.
+columnas_numericas = df_muestra.select_dtypes(include='number').columns.tolist()
+print(f"Variables numéricas: {columnas_numericas}")
 
-1. Estadística descriptiva para las variables cuantitativas
-   (media, mediana, desviación estándar, mínimo, máximo, asimetría):
-       df_muestra.describe()|
-       df_muestra.skew(numeric_only=True)
+estadisticos = df_muestra[columnas_numericas].describe()
+sesgos = df_muestra[columnas_numericas].apply(lambda x: skew(x.dropna()))
+estadisticos.loc['Sesgo'] = sesgos
 
-2. Mínimo dos visualizaciones con su interpretación escrita
-   (histograma, boxplot, gráfico de barras, etc.) sobre las
-   variables de df_muestra.
-"""
+# Se renombran los índices para que la tabla exportada sea más legible
+# que los nombres técnicos que usa pandas por defecto (count, mean, std...).
+estadisticos.index = [
+    'Conteo', 'Media', 'Desv. Est.', 'Mínimo', 'Q1 (25%)',
+    'Mediana (50%)', 'Q3 (75%)', 'Máximo', 'Sesgo'
+]
 
-# TODO (Michael): Verificación de normalidad (Shapiro-Wilk + gráfico Q-Q)
-# para al menos una variable cuantitativa de df_muestra.
-#   from scipy import stats
-#   stats.shapiro(df_muestra["Valor FOB (USD)"])
+# Exportación: tabla de estadística descriptiva, para la sección de
+# Análisis exploratorio del artículo.
+estadisticos_rounded = estadisticos.round(2)
+dfi.export(estadisticos_rounded.style.hide(axis='index'),
+           'Doc/anexos/tabla_estadisticos.png')
+
+# Visualización 1: boxplot de Valor FOB, para identificar outliers.
+plt.figure(figsize=(8, 6))
+sns.boxplot(y=df_muestra['Valor FOB (USD)'], color='steelblue')
+plt.title('Boxplot - Valor FOB (USD)', fontsize=14)
+plt.ylabel('Valor FOB (USD)', fontsize=12)
+plt.tight_layout()
+plt.savefig('Doc/anexos/boxplot_valor_fob.png', dpi=300)
+plt.close()
+
+# Visualización 2: histograma de Peso Neto, para observar la forma
+# de la distribución (asimetría, colas).
+plt.figure(figsize=(8, 6))
+sns.histplot(df_muestra['Peso Neto (Kg)'], bins=30, kde=True, color='forestgreen')
+plt.title('Distribución del Peso Neto (Kg)', fontsize=14)
+plt.xlabel('Peso Neto (Kg)', fontsize=12)
+plt.ylabel('Frecuencia', fontsize=12)
+plt.tight_layout()
+plt.savefig('Doc/anexos/histograma_peso_neto.png', dpi=300)
+plt.close()
+
+
+# Sección a cargo de Michael: verificación de normalidad
+# (Shapiro-Wilk + gráfico Q-Q) para Valor FOB (USD).
+
+# Se eliminan nulos por seguridad antes de correr la prueba, aunque ya
+# se confirmó que df_filtrado no los tiene.
+variable = df_muestra['Valor FOB (USD)'].dropna()
+print(f"Registros válidos para la prueba: {len(variable)}")
+
+estadistico_w, p_valor = shapiro(variable)
+print(f"\nEstadístico W: {estadistico_w:.6f}")
+print(f"Valor p: {p_valor:.6e}")
+
+# Conclusión estadística con nivel de significancia alfa = 0.05.
+alfa = 0.05
+print(f"\nNivel de significancia (alfa): {alfa}")
+if p_valor > alfa:
+    conclusion = "NO se rechaza H0. Los datos podrían provenir de una distribución normal (no hay evidencia suficiente en contra)."
+else:
+    conclusion = "SE RECHAZA H0. Existe evidencia estadística significativa de que los datos NO siguen una distribución normal."
+print(f"Conclusión: {conclusion}")
+
+# Gráfico Q-Q para la misma variable, como evidencia visual que
+# complementa el resultado numérico de Shapiro-Wilk.
+plt.figure(figsize=(8, 6))
+probplot(variable, dist="norm", plot=plt)
+plt.title('Gráfico Q-Q - Valor FOB (USD)', fontsize=14)
+plt.xlabel('Cuantiles teóricos (normal)', fontsize=12)
+plt.ylabel('Cuantiles muestrales', fontsize=12)
+plt.grid(alpha=0.4)
+plt.tight_layout()
+plt.savefig('Doc/anexos/qqplot_valor_fob.png', dpi=300)
+plt.close()

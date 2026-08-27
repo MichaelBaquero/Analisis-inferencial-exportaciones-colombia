@@ -1,0 +1,22 @@
+# ============================================================
+# Proyecto Integrador - Analítica Descriptiva II
+# Python 3.13
+# ============================================================
+
+# --- Dependencias principales para la carga y exportación ---
+pandas>=2.2.0
+dataframe_image>=0.2.1
+# Necesario para leer el archivo .xlsx
+openpyxl>=3.1.0             
+
+# --- Dependencias para EDA y visualización ---
+numpy>=1.26.0
+matplotlib>=3.8.0
+seaborn>=0.13.0
+scipy>=1.12.0
+
+# --- Dependencias de red (actualizadas para evitar warnings) ---
+requests>=2.31.0
+urllib3>=2.2.2
+charset-normalizer>=3.3.0
+chardet>=5.0.0

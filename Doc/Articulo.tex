@@ -26,7 +26,6 @@
     frame=single,
     breaklines=true,
     showstringspaces=false,
-    % ======= OPCIONES PARA UTF-8 =======
     inputencoding=utf8,
     extendedchars=true,
     literate=
@@ -38,17 +37,13 @@
 % ============================================================
 % Portada
 % ============================================================
-\title{[Título tentativo del proyecto]}
+\title{Análisis Exploratorio de Exportaciones Colombianas \\ (Junio 2026)}
 \author{Angie Montero \and Michael Baquero}
 \date{Analítica Descriptiva II \\ \large Unicafam \\ Agosto 2026}
 
 \begin{document}
 
 \maketitle
-
-% ============================================================
-% SALTO DE PÁGINA PARA SEPARAR LA PORTADA
-% ============================================================
 \newpage
 
 % ============================================================
@@ -56,13 +51,13 @@
 % ============================================================
 \section{Introducción}
 
-% ============================================================
-% SALTO DE PÁGINA PARA SEPARAR LA INTRODUCCIÓN DEL DESARROLLO
-% ============================================================
+% TODO (Angie): Redactar la introducción del proyecto.
+% Contexto, pregunta de investigación, objetivos y estructura del documento.
+
 \newpage
 
 % ============================================================
-% 2. Descripción del dataset (Con desarrollo narrativo completo)
+% 2. Descripción del dataset
 % ============================================================
 \section{Descripción del dataset}
 
@@ -152,9 +147,6 @@ categóricas seleccionadas para el estudio.
     \label{tab:muestra_head}
 \end{figure}
 
-% ============================================================
-% SALTO DE PÁGINA PARA SEPARAR LO DESARROLLADO DE LO PENDIENTE
-% ============================================================
 \newpage
 
 % ============================================================
@@ -162,42 +154,87 @@ categóricas seleccionadas para el estudio.
 % ============================================================
 \section{Análisis exploratorio}
 
-% TODO (Angie): tabla de estadística descriptiva (media, mediana,
-% desviación estándar, mínimo, máximo, asimetría) + su interpretación.
 \subsection{Estadística descriptiva}
+% TODO (Angie): Completar esta subsección.
 
-% TODO (Angie): mínimo 2 visualizaciones con interpretación escrita.
 \subsection{Visualizaciones}
+% TODO (Angie): Completar esta subsección.
 
-% TODO (Michael): verificación de normalidad (Shapiro-Wilk + gráfico Q-Q)
-% para al menos una variable cuantitativa.
 \subsection{Verificación de normalidad}
 
-% ============================================================
-% SALTO DE PÁGINA ANTES DE LAS REFERENCIAS Y EL APÉNDICE
-% ============================================================
+Para evaluar el supuesto de normalidad de la variable cuantitativa 
+\emph{Valor FOB (USD)}, se aplicó la prueba de Shapiro-Wilk sobre la 
+muestra de 1.500 registros. Esta prueba contrasta la hipótesis nula de 
+que los datos provienen de una distribución normal.
+
+Los resultados obtenidos fueron los siguientes:
+\begin{itemize}
+    \item Estadístico de prueba (\(W\)): \textbf{0.024734}
+    \item Valor \(p\): \textbf{\(8.77 \times 10^{-66}\)}
+\end{itemize}
+
+Dado que el valor \(p\) es muy inferior al nivel de significancia 
+\(\alpha = 0.05\), se \textbf{rechaza la hipótesis nula}. Por lo tanto, 
+existe evidencia estadística sumamente significativa de que la variable 
+\emph{Valor FOB (USD)} \textbf{no sigue una distribución normal}.
+
+Este hallazgo se complementa con el gráfico Q-Q presentado en la 
+Figura~\ref{fig:qqplot}, donde se observa que los puntos se desvían 
+claramente de la línea de referencia en los cuantiles superiores, 
+confirmando la presencia de colas pesadas y valores atípicos.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{anexos/qqplot_valor_fob.png}
+    \caption{Gráfico Q-Q para la variable Valor FOB (USD).}
+    \label{fig:qqplot}
+\end{figure}
+
+En consecuencia, para el modelo de regresión lineal que se desarrollará 
+en etapas posteriores, se recomienda aplicar una transformación 
+logarítmica a esta variable con el fin de aproximar su comportamiento a 
+una distribución normal y cumplir con los supuestos del modelo.
+
 \newpage
 
 % ============================================================
 % Referencias
 % ============================================================
-% TODO (Michael): mínimo 4 referencias APA 7ª ed. (2 académicas + 2 de
-% fuentes de datos).
 \section*{Referencias}
 
-% ============================================================
-% SALTO DE PÁGINA PARA EL APÉNDICE
-% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{dian2026}
+Dirección de Impuestos y Aduanas Nacionales - DIAN. (2026).
+\emph{Estadísticas de comercio exterior - Exportaciones (junio 2026)}.
+Recuperado de \url{https://www.dian.gov.co/dian/cifras/Paginas/Bases-Estadisticas-de-Comercio-Exterior-Importaciones-y-Exportaciones.aspx}
+
+\bibitem{dane2026}
+Departamento Administrativo Nacional de Estadística - DANE. (2026).
+\emph{Comercio exterior: Metodología y validación de estadísticas de exportaciones}.
+Recuperado de \url{https://www.dane.gov.co}
+
+\bibitem{montgomery2018}
+Montgomery, D. C., \& Runger, G. C. (2018).
+\emph{Applied statistics and probability for engineers} (7th ed.).
+Wiley.
+
+\bibitem{shapirowilk1965}
+Shapiro, S. S., \& Wilk, M. B. (1965).
+An analysis of variance test for normality (complete samples).
+\emph{Biometrika}, \emph{52}(3/4), 591--611.
+\url{https://doi.org/10.2307/2333709}
+
+\end{thebibliography}
+
 \newpage
 
 % ============================================================
-% Apéndices
+% Apéndice
 % ============================================================
 \appendix
 \section{Apéndice: Código fuente}
 
-% TODO (Michael): pegar aquí el contenido de eda_exportaciones.py
-% usando \lstinputlisting o \begin{lstlisting}...\end{lstlisting}
 \lstinputlisting[language=Python]{../eda_exportaciones.py}
 
 \end{document}
