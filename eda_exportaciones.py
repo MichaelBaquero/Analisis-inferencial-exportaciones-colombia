@@ -7,27 +7,33 @@
 # ============================================================
 
 # Importe de librerías
+import os
 import pandas as pd
 import dataframe_image as dfi
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import shapiro, probplot, skew
 
+
+def exportar_imagen(path):
+    """
+    Elimina la imagen existente en 'path' (si existe) antes de generar
+    la nueva. Evita que queden versiones desactualizadas en Doc/anexos/
+    cuando se vuelve a correr el script tras un cambio.
+    """
+    if os.path.exists(path):
+        os.remove(path)
+
+
 # Lectura del documento
 df = pd.read_excel("Data/06_Exportaciones_2026_Junio.xlsx")
 
-# Visualización inicial del dataframe:
-# - Primeras 5 filas del dataframe
-# - Dimensiones del dataframe
-# - Tipos de datos y valores nulos
+# Visualización inicial del dataframe
 print('Visualización de primeras filas:\n', df.head(5))
 print('\nVisualización de las dimensiones: ', df.shape)
 print(df.info())
 
-# Exportación: resumen del dataset ORIGINAL (dimensiones y tipos de dato)
-# para incluir en la sección de Descripción del dataset del artículo.
-# Se usa .style.hide(axis='index') porque dataframe_image no soporta
-# el parámetro index=False que sí acepta to_latex().
+# Exportación: resumen del dataset ORIGINAL
 resumen_original = pd.DataFrame({
     "Dataset": ["Original"],
     "Filas": [df.shape[0]],
@@ -35,13 +41,11 @@ resumen_original = pd.DataFrame({
     "Columnas numéricas": [df.select_dtypes(include="number").shape[1]],
     "Columnas categóricas/texto": [df.select_dtypes(include="object").shape[1]]
 })
+exportar_imagen("Doc/anexos/tabla_resumen_original.png")
 dfi.export(resumen_original.style.hide(axis='index'),
            "Doc/anexos/tabla_resumen_original.png")
 
-# Exploración preliminar de variables categóricas candidatas, ANTES de
-# decidir cuáles incluir en el análisis. Se revisan sobre el dataset
-# ORIGINAL (df), incluyendo PAIS_DESTINO_FINAL, para que la selección
-# posterior de columnas quede sustentada en esta evidencia.
+# Exploración preliminar de variables categóricas candidatas
 categoricas_candidatas = [
     "MODO_TRANSPORTE",
     "MODALIDAD_EXPORTACION",
@@ -52,22 +56,16 @@ categoricas_candidatas = [
 for col in categoricas_candidatas:
     print(col, "->", df[col].nunique(), "categorías únicas")
 
-# Exportación: número de categorías únicas por variable categórica candidata.
-# Esta tabla es la evidencia que sustenta la exclusión de PAIS_DESTINO_FINAL
-# (173 categorías, inviable para pruebas de hipótesis tipo chi-cuadrado)
-# frente a las demás variables categóricas, que sí son manejables.
+# Exportación: número de categorías únicas por variable categórica candidata
 resumen_categoricas = pd.DataFrame({
     "Variable": categoricas_candidatas,
     "Categorías únicas": [df[col].nunique() for col in categoricas_candidatas]
 })
+exportar_imagen("Doc/anexos/tabla_categoricas.png")
 dfi.export(resumen_categoricas.style.hide(axis='index'),
            "Doc/anexos/tabla_categoricas.png")
 
-# Con base en la exploración anterior, se realiza el filtro de columnas
-# categóricas y numéricas apropiadas para orientar el desarrollo de la
-# pregunta de investigación y el modelo de regresión final. Se excluye
-# PAIS_DESTINO_FINAL por el resultado mostrado en la tabla anterior
-# (173 categorías únicas).
+# Filtro de columnas relevantes (se excluye PAIS_DESTINO_FINAL)
 columnas_relevantes = [
     "VALOR_FOB_USD",
     "PESO_NETO_KGS",
@@ -83,9 +81,7 @@ columnas_relevantes = [
 ]
 df_filtrado = df[columnas_relevantes]
 
-# Se renombran las variables a nombres cortos y legibles antes de exportar
-# las imágenes, para evitar que los nombres técnicos desborden el ancho
-# de la página del documento LaTeX.
+# Renombres para nombres cortos y legibles
 renombres = {
     "VALOR_FOB_USD": "Valor FOB (USD)",
     "PESO_NETO_KGS": "Peso Neto (Kg)",
@@ -101,9 +97,7 @@ renombres = {
 }
 df_filtrado = df_filtrado.rename(columns=renombres)
 
-# Diccionario con la descripción semántica de cada variable, usado para
-# llenar automáticamente la columna "Descripción" en la tabla de
-# variables seleccionadas.
+# Diccionario con descripciones
 descripciones = {
     "VALOR_FOB_USD": "Valor de la mercancía en dólares (FOB: Free On Board, sin fletes ni seguros).",
     "PESO_NETO_KGS": "Peso neto de la mercancía en kilogramos (sin incluir embalaje).",
@@ -118,103 +112,114 @@ descripciones = {
     "TIPO_DE_EMBARQUE": "Tipo de embarque (único, consolidado, etc.)."
 }
 
-# Exportación: tabla de variables seleccionadas (nombre, tipo y descripción).
+# Exportación: tabla de variables seleccionadas
 tabla_variables = pd.DataFrame({
     "Variable": [renombres[col] for col in columnas_relevantes],
     "Tipo": [str(df_filtrado[col].dtype) for col in df_filtrado.columns],
     "Descripción": [descripciones[col] for col in columnas_relevantes]
 })
+exportar_imagen("Doc/anexos/tabla_variables_seleccionadas.png")
 dfi.export(tabla_variables.style.hide(axis='index'),
            "Doc/anexos/tabla_variables_seleccionadas.png")
 
-# Se validan valores nulos para columnas seleccionadas
+# Validación de valores nulos
 print('\nVisualización de valores nulos:\n', df_filtrado.isnull().sum())
 
-# Con fines de optimizar el código y evitar saturación en el modelo de
-# regresión lineal:
-# - Se delimita una muestra de 1500 registros para el desarrollo del proyecto
-# - random_state=42 fija la semilla para garantizar reproducibilidad
-# - reset_index(drop=True) reinicia los índices para que la tabla final
-#   muestre una secuencia limpia (0, 1, 2, 3, 4) en lugar de índices aleatorios
+# Muestreo inicial (sobre el dataset filtrado)
 df_muestra = df_filtrado.sample(n=1500, random_state=42).reset_index(drop=True)
-print('\nVisualización de las nuevas dimensiones: ', df_muestra.shape)
-print('\nVisualización de primeras filas:\n', df_muestra.head(5))
+print(f"\nMuestra obtenida: {df_muestra.shape[0]} filas")
 
-# Exportación: comparación de dimensiones dataset original vs. muestra.
-# Sustenta la justificación del volumen y técnica de muestreo en el texto.
-resumen_muestra = pd.DataFrame({
-    "Dataset": ["Original (filtrado)", "Muestra de trabajo"],
-    "Filas": [df_filtrado.shape[0], df_muestra.shape[0]],
-    "Columnas": [df_filtrado.shape[1], df_muestra.shape[1]]
+# Q-Q plot de la muestra con outliers.
+# Se genera como evidencia visual del problema de no normalidad, antes
+# de aplicar el tratamiento de outliers.
+plt.figure(figsize=(8, 6))
+probplot(df_muestra['Valor FOB (USD)'].dropna(), dist="norm", plot=plt)
+plt.title('Q-Q plot - Muestra (con outliers)', fontsize=14)
+plt.xlabel('Cuantiles teóricos (normal)', fontsize=12)
+plt.ylabel('Cuantiles muestrales', fontsize=12)
+plt.grid(alpha=0.4)
+plt.tight_layout()
+exportar_imagen('Doc/anexos/qqplot_muestra_con_outliers.png')
+plt.savefig('Doc/anexos/qqplot_muestra_con_outliers.png', dpi=300)
+plt.close()
+
+# Detección de outliers sobre la muestra (método IQR)
+Q1 = df_muestra['Valor FOB (USD)'].quantile(0.25)
+Q3 = df_muestra['Valor FOB (USD)'].quantile(0.75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+outliers_mask = (df_muestra['Valor FOB (USD)'] < lower_bound) | (df_muestra['Valor FOB (USD)'] > upper_bound)
+outliers = df_muestra[outliers_mask]
+
+num_outliers = len(outliers)
+total_rows = len(df_muestra)
+pct_outliers = 100 * num_outliers / total_rows
+
+# Exportación: tabla resumen de la detección de outliers
+tabla_outliers = pd.DataFrame({
+    "Métrica": [
+        "Total de filas en la muestra",
+        "Outliers detectados",
+        "Porcentaje de outliers",
+        "Límite inferior (Q1 - 1.5*IQR)",
+        "Límite superior (Q3 + 1.5*IQR)",
+        "Valor mínimo en la muestra",
+        "Valor máximo en la muestra",
+        "Q1",
+        "Q3",
+        "IQR"
+    ],
+    "Valor": [
+        f"{total_rows}",
+        f"{num_outliers}",
+        f"{pct_outliers:.2f}%",
+        f"{lower_bound:.2f}",
+        f"{upper_bound:.2f}",
+        f"{df_muestra['Valor FOB (USD)'].min():.2f}",
+        f"{df_muestra['Valor FOB (USD)'].max():.2f}",
+        f"{Q1:.2f}",
+        f"{Q3:.2f}",
+        f"{IQR:.2f}"
+    ]
 })
-dfi.export(resumen_muestra.style.hide(axis='index'),
-           "Doc/anexos/tabla_dimensiones_muestra.png")
+exportar_imagen("Doc/anexos/tabla_outliers_muestra.png")
+dfi.export(tabla_outliers.style.hide(axis='index'),
+           "Doc/anexos/tabla_outliers_muestra.png")
 
-# Exportación: primeras filas de la muestra final, redondeada a 2 decimales
-# para que la imagen se vea más limpia.
-muestra_head = df_muestra.head(5).round(2)
-dfi.export(muestra_head, "Doc/anexos/tabla_muestra_head.png")
+print("\n--- Resumen de outliers (sobre la muestra) ---")
+print(tabla_outliers.to_string(index=False))
+
+# Exclusión de outliers para obtener la muestra de trabajo definitiva
+df_muestra_clean = df_muestra[~outliers_mask].copy()
+print(f"\nFilas después de excluir outliers: {len(df_muestra_clean)}")
 
 
 # Sección a cargo de Angie: estadística descriptiva y visualizaciones
-# sobre las variables numéricas de df_muestra.
-
-# Estadística descriptiva de las variables numéricas: se calcula con
-# describe() y se agrega la asimetría (skew), que describe() no incluye.
-columnas_numericas = df_muestra.select_dtypes(include='number').columns.tolist()
-print(f"Variables numéricas: {columnas_numericas}")
-
-estadisticos = df_muestra[columnas_numericas].describe()
-sesgos = df_muestra[columnas_numericas].apply(lambda x: skew(x.dropna()))
-estadisticos.loc['Sesgo'] = sesgos
-
-# Se renombran los índices para que la tabla exportada sea más legible
-# que los nombres técnicos que usa pandas por defecto (count, mean, std...).
-estadisticos.index = [
-    'Conteo', 'Media', 'Desv. Est.', 'Mínimo', 'Q1 (25%)',
-    'Mediana (50%)', 'Q3 (75%)', 'Máximo', 'Sesgo'
-]
-
-# Exportación: tabla de estadística descriptiva, para la sección de
-# Análisis exploratorio del artículo.
-estadisticos_rounded = estadisticos.round(2)
-dfi.export(estadisticos_rounded.style.hide(axis='index'),
-           'Doc/anexos/tabla_estadisticos.png')
-
-# Visualización 1: boxplot de Valor FOB, para identificar outliers.
-plt.figure(figsize=(8, 6))
-sns.boxplot(y=df_muestra['Valor FOB (USD)'], color='steelblue')
-plt.title('Boxplot - Valor FOB (USD)', fontsize=14)
-plt.ylabel('Valor FOB (USD)', fontsize=12)
-plt.tight_layout()
-plt.savefig('Doc/anexos/boxplot_valor_fob.png', dpi=300)
-plt.close()
-
-# Visualización 2: histograma de Peso Neto, para observar la forma
-# de la distribución (asimetría, colas).
-plt.figure(figsize=(8, 6))
-sns.histplot(df_muestra['Peso Neto (Kg)'], bins=30, kde=True, color='forestgreen')
-plt.title('Distribución del Peso Neto (Kg)', fontsize=14)
-plt.xlabel('Peso Neto (Kg)', fontsize=12)
-plt.ylabel('Frecuencia', fontsize=12)
-plt.tight_layout()
-plt.savefig('Doc/anexos/histograma_peso_neto.png', dpi=300)
-plt.close()
+# sobre las variables numéricas de df_muestra_clean (muestra sin outliers).
 
 
-# Sección a cargo de Michael: verificación de normalidad
-# (Shapiro-Wilk + gráfico Q-Q) para Valor FOB (USD).
-
-# Se eliminan nulos por seguridad antes de correr la prueba, aunque ya
-# se confirmó que df_filtrado no los tiene.
-variable = df_muestra['Valor FOB (USD)'].dropna()
-print(f"Registros válidos para la prueba: {len(variable)}")
+# (Shapiro-Wilk + gráfico Q-Q) para Valor FOB (USD), sobre la muestra
+# ya depurada de outliers (df_muestra_clean), que es la que se usa en
+# el resto del proyecto.
+variable = df_muestra_clean['Valor FOB (USD)'].dropna()
+print(f"\nRegistros válidos para la prueba: {len(variable)}")
 
 estadistico_w, p_valor = shapiro(variable)
-print(f"\nEstadístico W: {estadistico_w:.6f}")
-print(f"Valor p: {p_valor:.6e}")
 
-# Conclusión estadística con nivel de significancia alfa = 0.05.
+# Se reporta el valor p redondeado en formato decimal, no en notación
+# científica. Cuando el valor es extremadamente pequeño (menor a 0.001),
+# se reporta como "< 0.001" en vez de un número con muchos ceros,
+# siguiendo la convención estándar de reporte de pruebas de hipótesis.
+if p_valor < 0.001:
+    p_valor_str = "< 0.001"
+else:
+    p_valor_str = f"{p_valor:.3f}"
+
+print(f"\nEstadístico W: {estadistico_w:.4f}")
+print(f"Valor p: {p_valor_str}")
+
 alfa = 0.05
 print(f"\nNivel de significancia (alfa): {alfa}")
 if p_valor > alfa:
@@ -223,14 +228,33 @@ else:
     conclusion = "SE RECHAZA H0. Existe evidencia estadística significativa de que los datos NO siguen una distribución normal."
 print(f"Conclusión: {conclusion}")
 
-# Gráfico Q-Q para la misma variable, como evidencia visual que
+# Gráfico Q-Q de la muestra limpia, como evidencia visual que
 # complementa el resultado numérico de Shapiro-Wilk.
 plt.figure(figsize=(8, 6))
 probplot(variable, dist="norm", plot=plt)
-plt.title('Gráfico Q-Q - Valor FOB (USD)', fontsize=14)
+plt.title('Q-Q plot - Muestra sin outliers', fontsize=14)
 plt.xlabel('Cuantiles teóricos (normal)', fontsize=12)
 plt.ylabel('Cuantiles muestrales', fontsize=12)
 plt.grid(alpha=0.4)
 plt.tight_layout()
-plt.savefig('Doc/anexos/qqplot_valor_fob.png', dpi=300)
+exportar_imagen('Doc/anexos/qqplot_muestra_sin_outliers.png')
+plt.savefig('Doc/anexos/qqplot_muestra_sin_outliers.png', dpi=300)
 plt.close()
+
+# Exportación: comparación de dimensiones muestra inicial vs. sin outliers.
+resumen_muestra = pd.DataFrame({
+    "Dataset": ["Muestra inicial (seed 42)", "Muestra sin outliers"],
+    "Filas": [df_muestra.shape[0], df_muestra_clean.shape[0]],
+    "Columnas": [df_muestra.shape[1], df_muestra_clean.shape[1]]
+})
+exportar_imagen("Doc/anexos/tabla_dimensiones_muestra.png")
+dfi.export(resumen_muestra.style.hide(axis='index'),
+           "Doc/anexos/tabla_dimensiones_muestra.png")
+
+# Exportación: primeras filas de la muestra limpia, redondeada a 2
+# decimales. Se oculta el índice para mantener el mismo estilo visual
+# que las demás tablas exportadas.
+muestra_head = df_muestra_clean.head(5).round(2)
+exportar_imagen("Doc/anexos/tabla_muestra_head.png")
+dfi.export(muestra_head.style.hide(axis='index'),
+           "Doc/anexos/tabla_muestra_head.png")

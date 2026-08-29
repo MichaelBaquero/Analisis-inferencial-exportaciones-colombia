@@ -4,13 +4,14 @@
 \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
 \usepackage[margin=2.5cm]{geometry}
-\usepackage{booktabs}      
-\usepackage{listings}      
+\usepackage{booktabs}
+\usepackage{listings}
 \usepackage{xcolor}
-\usepackage{graphicx}      
+\usepackage{graphicx}
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \usepackage{bookmark}
+\usepackage{placeins}  % para \FloatBarrier
 
 % ============================================================
 % Configuración de bloques de código (para el Apéndice)
@@ -69,15 +70,16 @@ certificada por el Departamento Administrativo Nacional de Estadística
 agosto de 2026 desde
 \href{https://www.dian.gov.co/dian/cifras/Paginas/Bases-Estadisticas-de-Comercio-Exterior-Importaciones-y-Exportaciones.aspx}{la página oficial de estadísticas de comercio exterior de la DIAN}.
 
-El archivo original contiene un total de 103.179 registros y 72 variables. 
+El archivo original contiene un total de 103.179 registros y 72 variables.
 Dentro de este conjunto de datos, se identificaron 44 columnas de tipo numérico y 28 columnas de tipo categórico o texto, tal como se resume en la Tabla~\ref{tab:resumen_original}.
 
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{anexos/tabla_resumen_original.png}
     \caption{Resumen del dataset original de exportaciones (junio 2026).}
     \label{tab:resumen_original}
 \end{figure}
+\FloatBarrier
 
 \subsection*{Exploración de variables categóricas}
 Para determinar qué variables categóricas eran adecuadas para las
@@ -89,12 +91,13 @@ fue evaluar el número de categorías únicas presentes en cada una, ya que
 un número excesivo de categorías dificulta el análisis estadístico
 (Tabla~\ref{tab:categoricas}).
 
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.5\textwidth]{anexos/tabla_categoricas.png}
     \caption{Número de categorías únicas por variable categórica candidata.}
     \label{tab:categoricas}
 \end{figure}
+\FloatBarrier
 
 Con base en este análisis, se identificó que la variable
 \texttt{PAIS\_DESTINO\_FINAL} presenta un total de 173 categorías
@@ -111,41 +114,71 @@ tanto variables cuantitativas (como valores monetarios y pesos) como
 variables categóricas de baja cardinalidad. La descripción técnica de
 cada variable seleccionada se presenta en la Tabla~\ref{tab:variables_seleccionadas}.
 
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{anexos/tabla_variables_seleccionadas.png}
     \caption{Variables seleccionadas del dataset de exportaciones.}
     \label{tab:variables_seleccionadas}
 \end{figure}
+\FloatBarrier
 
-\subsection*{Muestreo y dimensiones finales}
+\subsection*{Muestreo y tratamiento de outliers}
+
 Dado el volumen del dataset filtrado y con el fin de optimizar los
 recursos computacionales, se optó por trabajar con una muestra aleatoria
 simple de 1.500 registros. Se fijó una semilla aleatoria
 (\texttt{random\_state=42}) para garantizar la reproducibilidad de los
 resultados. Esta reducción evita sobrecargar el modelo de regresión
-lineal y reduce significativamente los tiempos de ejecución. La
-comparación de las dimensiones del dataset filtrado frente a la muestra
-de trabajo se observa en la Tabla~\ref{tab:dimensiones_muestra}.
+lineal y reduce significativamente los tiempos de ejecución.
 
-\begin{figure}[h!]
+Una vez extraída la muestra, se aplicó un procedimiento sistemático
+para detectar y excluir valores atípicos (outliers) en la variable
+cuantitativa \emph{Valor FOB (USD)}. Se utilizó el método del rango
+intercuartílico (IQR), considerando como outlier todo valor por debajo
+de \(Q_1 - 1.5 \times IQR\) o por encima de \(Q_3 + 1.5 \times IQR\).
+La Tabla~\ref{tab:outliers} resume los estadísticos clave de este
+procedimiento aplicado sobre la muestra de 1.500 registros.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.6\textwidth]{anexos/tabla_outliers_muestra.png}
+    \caption{Estadísticos de detección de outliers sobre la muestra (n=1500).}
+    \label{tab:outliers}
+\end{figure}
+\FloatBarrier
+
+Se detectaron \textbf{223 outliers} (14.87\% de la muestra), todos
+ellos correspondientes a valores extremadamente altos, dado que el
+límite inferior resultó negativo (\(-16258.31\)) y el valor mínimo
+observado fue positivo (\(0.06\)). El valor máximo alcanzó los
+\(34\,800\,615.03\) USD, muy por encima del límite superior de
+\(28\,163.49\) USD. Estos valores atípicos se excluyeron para obtener
+una muestra depurada de 1.277 registros, sobre la cual se realizó el
+análisis exploratorio y las pruebas de normalidad.
+
+La Tabla~\ref{tab:dimensiones_muestra} compara las dimensiones de la
+muestra inicial (con outliers) y la muestra final sin outliers.
+
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.6\textwidth]{anexos/tabla_dimensiones_muestra.png}
-    \caption{Comparación de dimensiones: dataset filtrado vs. muestra de trabajo (n=1500).}
+    \caption{Comparación de dimensiones: muestra inicial vs. muestra sin outliers.}
     \label{tab:dimensiones_muestra}
 \end{figure}
+\FloatBarrier
 
 A modo de ejemplo tangible, la Tabla~\ref{tab:muestra_head} presenta
-las primeras cinco filas de la muestra de trabajo. Se puede observar
-cómo se estructuran los datos de las variables cuantitativas y
+las primeras cinco filas de la muestra de trabajo ya depurada. Se puede
+observar cómo se estructuran los datos de las variables cuantitativas y
 categóricas seleccionadas para el estudio.
 
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth]{anexos/tabla_muestra_head.png}
-    \caption{Primeras 5 filas de la muestra de trabajo (n=1500).}
+    \caption{Primeras 5 filas de la muestra final (sin outliers).}
     \label{tab:muestra_head}
 \end{figure}
+\FloatBarrier
 
 \newpage
 
@@ -155,45 +188,72 @@ categóricas seleccionadas para el estudio.
 \section{Análisis exploratorio}
 
 \subsection{Estadística descriptiva}
-% TODO (Angie): Completar esta subsección.
+% TODO (Angie): Completar esta subsección con descriptivos de la muestra
+% limpia (df_muestra_clean): media, mediana, desviación estándar, mínimo,
+% máximo, asimetría, con su interpretación escrita.
 
 \subsection{Visualizaciones}
-% TODO (Angie): Completar esta subsección.
+% TODO (Angie): Completar esta subsección con histogramas, boxplots, etc.,
+% utilizando la muestra sin outliers (df_muestra_clean), con interpretación
+% escrita de cada gráfico.
 
 \subsection{Verificación de normalidad}
 
-Para evaluar el supuesto de normalidad de la variable cuantitativa 
-\emph{Valor FOB (USD)}, se aplicó la prueba de Shapiro-Wilk sobre la 
-muestra de 1.500 registros. Esta prueba contrasta la hipótesis nula de 
-que los datos provienen de una distribución normal.
+Como evidencia inicial del problema de normalidad, la
+Figura~\ref{fig:qqplot_con_outliers} muestra el gráfico Q-Q de la
+muestra de 1.500 registros antes de excluir valores atípicos, donde se
+observa una clara desviación de los puntos respecto a la línea de
+referencia en los cuantiles superiores, evidenciando la presencia de
+colas pesadas y valores extremos.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.6\textwidth]{anexos/qqplot_muestra_con_outliers.png}
+    \caption{Gráfico Q-Q para la muestra inicial (con outliers).}
+    \label{fig:qqplot_con_outliers}
+\end{figure}
+\FloatBarrier
+
+Tras la exclusión de los 223 outliers detectados mediante el método IQR
+(ver sección de Muestreo y tratamiento de outliers), se aplicó la
+prueba de Shapiro-Wilk sobre la muestra depurada de 1.277 registros
+para evaluar formalmente el supuesto de normalidad de la variable
+\emph{Valor FOB (USD)}.
 
 Los resultados obtenidos fueron los siguientes:
 \begin{itemize}
-    \item Estadístico de prueba (\(W\)): \textbf{0.024734}
-    \item Valor \(p\): \textbf{\(8.77 \times 10^{-66}\)}
+    \item Estadístico de prueba (\(W\)): \textbf{0.6867}
+    \item Valor \(p\): \textbf{< 0.001}
 \end{itemize}
 
-Dado que el valor \(p\) es muy inferior al nivel de significancia 
-\(\alpha = 0.05\), se \textbf{rechaza la hipótesis nula}. Por lo tanto, 
-existe evidencia estadística sumamente significativa de que la variable 
-\emph{Valor FOB (USD)} \textbf{no sigue una distribución normal}.
+Dado que el valor \(p\) es inferior al nivel de significancia
+\(\alpha = 0.05\), se \textbf{rechaza la hipótesis nula}. Existe
+evidencia estadística de que la variable \emph{Valor FOB (USD)}, incluso
+tras la exclusión de outliers, \textbf{no sigue una distribución normal}.
+No obstante, vale la pena resaltar la magnitud de la mejora: el
+estadístico \(W\) pasó de \textbf{0.0247} (muestra con outliers) a
+\textbf{0.6867} (muestra sin outliers) -- un salto sustancial en una
+escala de 0 a 1, donde 1 representa normalidad perfecta. Esto confirma
+que la exclusión de outliers tuvo un efecto real y medible sobre la
+forma de la distribución, aunque no suficiente para alcanzar
+significancia estadística de normalidad. El gráfico Q-Q de la
+Figura~\ref{fig:qqplot_sin_outliers} respalda visualmente esta mejora:
+los puntos se aproximan mucho más a la línea diagonal, especialmente en
+las colas.
 
-Este hallazgo se complementa con el gráfico Q-Q presentado en la 
-Figura~\ref{fig:qqplot}, donde se observa que los puntos se desvían 
-claramente de la línea de referencia en los cuantiles superiores, 
-confirmando la presencia de colas pesadas y valores atípicos.
-
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.6\textwidth]{anexos/qqplot_valor_fob.png}
-    \caption{Gráfico Q-Q para la variable Valor FOB (USD).}
-    \label{fig:qqplot}
+    \includegraphics[width=0.6\textwidth]{anexos/qqplot_muestra_sin_outliers.png}
+    \caption{Gráfico Q-Q para la muestra sin outliers.}
+    \label{fig:qqplot_sin_outliers}
 \end{figure}
+\FloatBarrier
 
-En consecuencia, para el modelo de regresión lineal que se desarrollará 
-en etapas posteriores, se recomienda aplicar una transformación 
-logarítmica a esta variable con el fin de aproximar su comportamiento a 
-una distribución normal y cumplir con los supuestos del modelo.
+En consecuencia, para el modelo de regresión lineal que se desarrollará
+en etapas posteriores, se recomienda aplicar una transformación
+logarítmica a la variable \emph{Valor FOB (USD)} con el fin de
+aproximar su comportamiento a una distribución normal y cumplir con los
+supuestos del modelo.
 
 \newpage
 
