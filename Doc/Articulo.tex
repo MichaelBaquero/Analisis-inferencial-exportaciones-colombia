@@ -35,16 +35,27 @@
       {ñ}{{\~n}}1 {Ñ}{{\~N}}1
 }
 
+\begin{document}
+
 % ============================================================
 % Portada
 % ============================================================
-\title{Análisis Exploratorio de Exportaciones Colombianas \\ (Junio 2026)}
-\author{Angie Montero \and Michael Baquero}
-\date{Analítica Descriptiva II \\ \large Unicafam \\ Agosto 2026}
+\begin{titlepage}
+    \centering
+    \includegraphics[width=0.35\textwidth]{anexos/logo.png}\\[1.5cm]
 
-\begin{document}
+    {\LARGE \textbf{Análisis Exploratorio de Exportaciones Colombianas}}\\[0.3cm]
+    {\Large (Junio 2026)}\\[2cm]
 
-\maketitle
+    {\large Angie Paola Montero Tique \\ Michael Yesid Baquero Gomez}\\[1.5cm]
+
+    {\large Analítica Descriptiva II}\\[0.2cm]
+    {\large Unicafam}\\[0.2cm]
+    {\large Agosto 2026}
+
+    \vfill
+\end{titlepage}
+
 \newpage
 
 % ============================================================
@@ -52,8 +63,61 @@
 % ============================================================
 \section{Introducción}
 
-% TODO (Angie): Redactar la introducción del proyecto.
-% Contexto, pregunta de investigación, objetivos y estructura del documento.
+El comercio exterior es uno de los pilares de la actividad económica
+colombiana, y su seguimiento estadístico permite comprender el
+comportamiento de los sectores productivos que participan en él
+\cite{dian2026}. La Dirección de Impuestos y Aduanas Nacionales (DIAN),
+en conjunto con el Departamento Administrativo Nacional de Estadística
+(DANE), produce y certifica mensualmente las estadísticas oficiales de
+exportaciones del país, las cuales constituyen una de las fuentes más
+completas y confiables para el análisis cuantitativo de esta actividad
+\cite{dane2026}. Dentro de estas estadísticas, variables como el valor
+FOB, el peso de la mercancía y los costos de flete permiten caracterizar
+no solo cuánto exporta el país, sino también bajo qué condiciones
+logísticas y económicas se realizan dichas operaciones.
+
+A pesar de la disponibilidad de esta información, no es evidente a
+simple vista cómo se relacionan el peso de las mercancías exportadas
+con su valor comercial y con los costos asociados al transporte
+internacional. Comprender esta relación es relevante tanto para
+empresas exportadoras, que buscan optimizar sus costos logísticos,
+como para quienes diseñan política de comercio exterior, interesados
+en identificar patrones de eficiencia según el tipo de mercancía o el
+modo de transporte utilizado. De este panorama surge la pregunta de
+investigación que orienta el presente proyecto: \textbf{¿cómo se
+relaciona el peso de las mercancías con el valor FOB y los costos de
+flete en las exportaciones colombianas de junio de 2026?}
+
+Para responder a esta pregunta, se plantean los siguientes objetivos:
+
+\textbf{Objetivo general:} Analizar la relación entre el peso de las
+mercancías exportadas y sus costos asociados (valor FOB y fletes) en
+las exportaciones colombianas de junio de 2026, mediante técnicas de
+estadística inferencial.
+
+\textbf{Objetivos específicos:}
+\begin{enumerate}
+    \item Caracterizar estadísticamente las variables de valor, peso y
+    costos de las exportaciones seleccionadas.
+    \item Evaluar el cumplimiento del supuesto de normalidad de la
+    variable Valor FOB (USD), antes y después del tratamiento de
+    valores atípicos.
+    \item Determinar, mediante un modelo de regresión lineal simple, la
+    relación entre el peso neto de la mercancía y su valor FOB.
+    \item Comparar los costos de flete asociados a las exportaciones
+    según el modo de transporte utilizado.
+\end{enumerate}
+
+Este análisis resulta de interés para empresas exportadoras que buscan
+dimensionar sus costos logísticos en función del peso de sus productos,
+así como para actores del sector público interesados en identificar
+patrones de eficiencia en el comercio exterior colombiano. El estudio
+se limita a las exportaciones registradas por la DIAN durante el mes de
+junio de 2026, y se desarrolla sobre una muestra aleatoria de 1.500
+registros, de la cual se excluyeron 394 valores atípicos (26.27\,\%)
+mediante el método del rango intercuartílico (IQR), aplicado sobre las
+variables Valor FOB (USD), Peso Neto (Kg) y Cant. Unidades, obteniendo
+una muestra final de 1.106 registros para el análisis.
 
 \newpage
 
@@ -132,28 +196,29 @@ resultados. Esta reducción evita sobrecargar el modelo de regresión
 lineal y reduce significativamente los tiempos de ejecución.
 
 Una vez extraída la muestra, se aplicó un procedimiento sistemático
-para detectar y excluir valores atípicos (outliers) en la variable
-cuantitativa \emph{Valor FOB (USD)}. Se utilizó el método del rango
-intercuartílico (IQR), considerando como outlier todo valor por debajo
-de \(Q_1 - 1.5 \times IQR\) o por encima de \(Q_3 + 1.5 \times IQR\).
-La Tabla~\ref{tab:outliers} resume los estadísticos clave de este
-procedimiento aplicado sobre la muestra de 1.500 registros.
+para detectar y excluir valores atípicos (outliers) sobre tres
+variables cuantitativas: \emph{Valor FOB (USD)}, \emph{Peso Neto (Kg)}
+y \emph{Cant. Unidades}. Se utilizó el método del rango intercuartílico
+(IQR), considerando como outlier todo valor por debajo de
+\(Q_1 - 1.5 \times IQR\) o por encima de \(Q_3 + 1.5 \times IQR\) en al
+menos una de las tres variables. La Tabla~\ref{tab:outliers} resume los
+estadísticos clave de este procedimiento, detallados por variable, así
+como el total combinado.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.6\textwidth]{anexos/tabla_outliers_muestra.png}
-    \caption{Estadísticos de detección de outliers sobre la muestra (n=1500).}
+    \includegraphics[width=0.9\textwidth]{anexos/tabla_outliers_muestra.png}
+    \caption{Estadísticos de detección de outliers sobre la muestra (n=1500), por variable.}
     \label{tab:outliers}
 \end{figure}
 \FloatBarrier
 
-Se detectaron \textbf{223 outliers} (14.87\% de la muestra), todos
-ellos correspondientes a valores extremadamente altos, dado que el
-límite inferior resultó negativo (\(-16258.31\)) y el valor mínimo
-observado fue positivo (\(0.06\)). El valor máximo alcanzó los
-\(34\,800\,615.03\) USD, muy por encima del límite superior de
-\(28\,163.49\) USD. Estos valores atípicos se excluyeron para obtener
-una muestra depurada de 1.277 registros, sobre la cual se realizó el
+En total se detectaron \textbf{394 registros atípicos} (26.27\,\% de la
+muestra), considerando la unión de valores extremos en las tres
+variables analizadas: 223 en \emph{Valor FOB (USD)} (14.87\,\%), 267 en
+\emph{Peso Neto (Kg)} (17.80\,\%) y 269 en \emph{Cant. Unidades}
+(17.93\,\%). Estos registros se excluyeron para obtener una muestra
+depurada de \textbf{1.106} registros, sobre la cual se realizó el
 análisis exploratorio y las pruebas de normalidad.
 
 La Tabla~\ref{tab:dimensiones_muestra} compara las dimensiones de la
@@ -187,15 +252,107 @@ categóricas seleccionadas para el estudio.
 % ============================================================
 \section{Análisis exploratorio}
 
+A partir de la muestra depurada descrita en la sección anterior, se
+llevó a cabo un análisis exploratorio que incluye la estadística
+descriptiva de las variables cuantitativas, visualizaciones
+comparativas antes y después del tratamiento de outliers, y la
+verificación formal del supuesto de normalidad, como base para las
+etapas posteriores de prueba de hipótesis y regresión lineal.
+
 \subsection{Estadística descriptiva}
-% TODO (Angie): Completar esta subsección con descriptivos de la muestra
-% limpia (df_muestra_clean): media, mediana, desviación estándar, mínimo,
-% máximo, asimetría, con su interpretación escrita.
+
+Para dimensionar el efecto del tratamiento de outliers sobre las
+variables cuantitativas, se calcularon los estadísticos descriptivos
+(media, mediana, desviación estándar, mínimo, máximo y asimetría) tanto
+para la muestra con outliers (1.500 registros) como para la muestra
+depurada (1.106 registros). La Tabla~\ref{tab:estad_con} presenta los
+resultados sobre la muestra con outliers, mientras que la
+Tabla~\ref{tab:estad_sin} presenta los mismos estadísticos sobre la
+muestra sin outliers.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{anexos/tabla_estadisticos_con_outliers.png}
+    \caption{Estadística descriptiva de las variables numéricas -- muestra con outliers.}
+    \label{tab:estad_con}
+\end{figure}
+\FloatBarrier
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{anexos/tabla_estadisticos_sin_outliers.png}
+    \caption{Estadística descriptiva de las variables numéricas -- muestra sin outliers.}
+    \label{tab:estad_sin}
+\end{figure}
+\FloatBarrier
+
+Al ampliar el criterio IQR a tres variables (Valor FOB, Peso Neto y
+Cant. Unidades), la mejora en la forma de la distribución es aún más
+marcada que con el tratamiento aplicado únicamente a Valor FOB. La
+asimetría de \emph{Valor FOB (USD)} se reduce de \textbf{36.49} a
+\textbf{2.73}, y la de \emph{Peso Neto (Kg)} de \textbf{38.29} a
+\textbf{2.95}. La desviación estándar de \emph{Valor FOB (USD)} cae de
+\(916{,}701.21\) a \(4{,}675.58\), quedando en un orden de magnitud
+comparable al de su media (\(2{,}860.39\)). Este resultado confirma que
+el tratamiento conjunto de outliers en las tres variables produce una
+muestra considerablemente más representativa del comportamiento típico
+de las exportaciones, sin la distorsión que generaban los valores
+extremos de peso y cantidad que no se habían tratado en la primera
+versión del análisis.
 
 \subsection{Visualizaciones}
-% TODO (Angie): Completar esta subsección con histogramas, boxplots, etc.,
-% utilizando la muestra sin outliers (df_muestra_clean), con interpretación
-% escrita de cada gráfico.
+
+Las Figuras~\ref{fig:hist_fob_con}--\ref{fig:hist_peso_sin} presentan
+los histogramas de \emph{Valor FOB (USD)} y \emph{Peso Neto (Kg)},
+antes y después de la exclusión de outliers, permitiendo observar el
+cambio en la forma de la distribución.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{anexos/histograma_valor_fob_con_outliers.png}
+    \caption{Distribución de Valor FOB (USD) -- muestra con outliers.}
+    \label{fig:hist_fob_con}
+\end{figure}
+\FloatBarrier
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{anexos/histograma_valor_fob_sin_outliers.png}
+    \caption{Distribución de Valor FOB (USD) -- muestra sin outliers.}
+    \label{fig:hist_fob_sin}
+\end{figure}
+\FloatBarrier
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{anexos/histograma_peso_neto_con_outliers.png}
+    \caption{Distribución de Peso Neto (Kg) -- muestra con outliers.}
+    \label{fig:hist_peso_con}
+\end{figure}
+\FloatBarrier
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{anexos/histograma_peso_neto_sin_outliers.png}
+    \caption{Distribución de Peso Neto (Kg) -- muestra sin outliers.}
+    \label{fig:hist_peso_sin}
+\end{figure}
+\FloatBarrier
+
+Los histogramas con outliers (Figuras~\ref{fig:hist_fob_con} y
+\ref{fig:hist_peso_con}) muestran prácticamente la totalidad de las
+observaciones concentradas en una única barra cercana a cero, con el
+resto del eje horizontal vacío -- consecuencia de que unos pocos
+valores extremos estiran la escala del gráfico hasta comprimir toda la
+variabilidad real en un rango casi imperceptible. Al excluir los
+outliers en las tres variables (Figuras~\ref{fig:hist_fob_sin} y
+\ref{fig:hist_peso_sin}), ambas distribuciones recuperan una forma
+interpretable: una alta concentración de exportaciones de bajo valor y
+peso, seguida de una cola derecha decreciente que refleja un número
+menor de exportaciones de mayor magnitud. Esta forma, característica de
+una distribución de tipo log-normal, respalda la recomendación de
+aplicar una transformación logarítmica antes de construir el modelo de
+regresión lineal.
 
 \subsection{Verificación de normalidad}
 
@@ -214,32 +371,31 @@ colas pesadas y valores extremos.
 \end{figure}
 \FloatBarrier
 
-Tras la exclusión de los 223 outliers detectados mediante el método IQR
-(ver sección de Muestreo y tratamiento de outliers), se aplicó la
-prueba de Shapiro-Wilk sobre la muestra depurada de 1.277 registros
-para evaluar formalmente el supuesto de normalidad de la variable
-\emph{Valor FOB (USD)}.
+Tras la exclusión de los 394 outliers detectados mediante el método IQR
+sobre las tres variables analizadas (ver sección de Muestreo y
+tratamiento de outliers), se aplicó la prueba de Shapiro-Wilk sobre la
+muestra depurada de 1.106 registros para evaluar formalmente el
+supuesto de normalidad de la variable \emph{Valor FOB (USD)}.
 
 Los resultados obtenidos fueron los siguientes:
 \begin{itemize}
-    \item Estadístico de prueba (\(W\)): \textbf{0.6867}
+    \item Estadístico de prueba (\(W\)): \textbf{0.6277}
     \item Valor \(p\): \textbf{< 0.001}
 \end{itemize}
 
 Dado que el valor \(p\) es inferior al nivel de significancia
 \(\alpha = 0.05\), se \textbf{rechaza la hipótesis nula}. Existe
 evidencia estadística de que la variable \emph{Valor FOB (USD)}, incluso
-tras la exclusión de outliers, \textbf{no sigue una distribución normal}.
-No obstante, vale la pena resaltar la magnitud de la mejora: el
-estadístico \(W\) pasó de \textbf{0.0247} (muestra con outliers) a
-\textbf{0.6867} (muestra sin outliers) -- un salto sustancial en una
-escala de 0 a 1, donde 1 representa normalidad perfecta. Esto confirma
-que la exclusión de outliers tuvo un efecto real y medible sobre la
-forma de la distribución, aunque no suficiente para alcanzar
-significancia estadística de normalidad. El gráfico Q-Q de la
-Figura~\ref{fig:qqplot_sin_outliers} respalda visualmente esta mejora:
-los puntos se aproximan mucho más a la línea diagonal, especialmente en
-las colas.
+tras la exclusión conjunta de outliers en Valor FOB, Peso Neto y
+Cant. Unidades, \textbf{no sigue una distribución normal}. El gráfico
+Q-Q de la Figura~\ref{fig:qqplot_sin_outliers} respalda este resultado:
+si bien el punto extremo aislado que se observaba en la muestra original
+desaparece, los cuantiles muestrales siguen desviándose de la línea de
+referencia de forma sistemática -- por debajo de la diagonal en los
+cuantiles inferiores y por encima en los superiores -- patrón típico de
+una distribución con cola derecha más pesada que la normal, coherente
+con la asimetría de \textbf{2.73} reportada en la sección de estadística
+descriptiva.
 
 \begin{figure}[htbp]
     \centering
