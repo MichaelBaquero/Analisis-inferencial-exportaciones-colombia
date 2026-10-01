@@ -7,12 +7,14 @@
 # ============================================================
 
 # Importe de librerías
+import numpy as np
+from scipy.stats import spearmanr
 import os
 import pandas as pd
 import dataframe_image as dfi
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import shapiro, probplot, skew
+from scipy.stats import shapiro, probplot, skew, kruskal
 
 
 def exportar_imagen(path):
@@ -165,7 +167,8 @@ for var in variables_outlier:
     lower_bound = Q1 - 1.5 * IQR
     upper_bound = Q3 + 1.5 * IQR
 
-    var_mask = (df_muestra[var] < lower_bound) | (df_muestra[var] > upper_bound)
+    var_mask = (df_muestra[var] < lower_bound) | (
+        df_muestra[var] > upper_bound)
     outliers_mask = outliers_mask | var_mask
 
     resumen_por_variable.append({
@@ -240,26 +243,33 @@ dfi.export(muestra_head.style.hide(axis='index'),
 # que el único factor que cambia entre ellas es el tratamiento de
 # valores atípicos, no el tamaño muestral.
 
-columnas_numericas = df_muestra.select_dtypes(include='number').columns.tolist()
+columnas_numericas = df_muestra.select_dtypes(
+    include='number').columns.tolist()
 print(f"Variables numéricas: {columnas_numericas}")
 
 # Estadística descriptiva de las variables numéricas: se calcula con
 # describe() y se agrega la asimetría (skew), que describe() no incluye.
 estadisticos_con_outliers = df_muestra[columnas_numericas].describe().T
-estadisticos_con_outliers["Asimetría"] = df_muestra[columnas_numericas].apply(skew)
+estadisticos_con_outliers["Asimetría"] = df_muestra[columnas_numericas].apply(
+    skew)
 estadisticos_con_outliers = estadisticos_con_outliers.round(2)
-print("\nEstadística descriptiva - muestra con outliers:\n", estadisticos_con_outliers)
+print("\nEstadística descriptiva - muestra con outliers:\n",
+      estadisticos_con_outliers)
 
 exportar_imagen("Doc/anexos/tabla_estadisticos_con_outliers.png")
-dfi.export(estadisticos_con_outliers, "Doc/anexos/tabla_estadisticos_con_outliers.png")
+dfi.export(estadisticos_con_outliers,
+           "Doc/anexos/tabla_estadisticos_con_outliers.png")
 
 estadisticos_sin_outliers = df_muestra_clean[columnas_numericas].describe().T
-estadisticos_sin_outliers["Asimetría"] = df_muestra_clean[columnas_numericas].apply(skew)
+estadisticos_sin_outliers["Asimetría"] = df_muestra_clean[columnas_numericas].apply(
+    skew)
 estadisticos_sin_outliers = estadisticos_sin_outliers.round(2)
-print("\nEstadística descriptiva - muestra sin outliers:\n", estadisticos_sin_outliers)
+print("\nEstadística descriptiva - muestra sin outliers:\n",
+      estadisticos_sin_outliers)
 
 exportar_imagen("Doc/anexos/tabla_estadisticos_sin_outliers.png")
-dfi.export(estadisticos_sin_outliers, "Doc/anexos/tabla_estadisticos_sin_outliers.png")
+dfi.export(estadisticos_sin_outliers,
+           "Doc/anexos/tabla_estadisticos_sin_outliers.png")
 
 
 # ------------------------------------------------------------
@@ -278,7 +288,8 @@ plt.savefig("Doc/anexos/histograma_valor_fob_con_outliers.png", dpi=300)
 plt.close()
 
 plt.figure(figsize=(8, 5))
-sns.histplot(df_muestra_clean["Valor FOB (USD)"].dropna(), kde=True, color="#4C72B0")
+sns.histplot(
+    df_muestra_clean["Valor FOB (USD)"].dropna(), kde=True, color="#4C72B0")
 plt.title("Valor FOB (USD) - Muestra sin outliers", fontsize=13)
 plt.xlabel("Valor FOB (USD)")
 plt.ylabel("Frecuencia")
@@ -299,7 +310,8 @@ plt.savefig("Doc/anexos/histograma_peso_neto_con_outliers.png", dpi=300)
 plt.close()
 
 plt.figure(figsize=(8, 5))
-sns.histplot(df_muestra_clean["Peso Neto (Kg)"].dropna(), kde=True, color="#4C72B0")
+sns.histplot(
+    df_muestra_clean["Peso Neto (Kg)"].dropna(), kde=True, color="#4C72B0")
 plt.title("Peso Neto (Kg) - Muestra sin outliers", fontsize=13)
 plt.xlabel("Peso Neto (Kg)")
 plt.ylabel("Frecuencia")
@@ -352,4 +364,155 @@ plt.grid(alpha=0.4)
 plt.tight_layout()
 exportar_imagen('Doc/anexos/qqplot_muestra_sin_outliers.png')
 plt.savefig('Doc/anexos/qqplot_muestra_sin_outliers.png', dpi=300)
+plt.close()
+
+# Conteo de observaciones por categoría de Modo Transporte en la muestra limpia.
+conteo_modo_transporte = df_muestra_clean['Modo Transporte'].value_counts(
+).reset_index()
+conteo_modo_transporte.columns = ['Modo Transporte', 'Frecuencia']
+print("\nConteo por Modo de Transporte (muestra sin outliers):\n",
+      conteo_modo_transporte)
+
+exportar_imagen("Doc/anexos/tabla_conteo_modo_transporte.png")
+dfi.export(conteo_modo_transporte.style.hide(axis='index'),
+           "Doc/anexos/tabla_conteo_modo_transporte.png")
+
+# Prueba de Kruskal-Wallis: compara si las distribuciones de Valor FOB
+# son iguales entre los grupos de Modo de Transporte, sin asumir normalidad
+grupos_transporte = [
+    grupo['Valor FOB (USD)'].values
+    for _, grupo in df_muestra_clean.groupby('Modo Transporte')
+]
+
+estadistico_h, p_valor_kw = kruskal(*grupos_transporte)
+
+if p_valor_kw < 0.001:
+    p_valor_kw_str = "< 0.001"
+else:
+    p_valor_kw_str = f"{p_valor_kw:.3f}"
+
+alfa = 0.05
+if p_valor_kw > alfa:
+    conclusion_kw = "NO se rechaza H0. No hay evidencia suficiente de diferencias entre los modos de transporte."
+else:
+    conclusion_kw = "SE RECHAZA H0. Existe evidencia estadística de que al menos un modo de transporte difiere en Valor FOB."
+
+print(f"\nEstadístico H: {estadistico_h:.4f}")
+print(f"Valor p: {p_valor_kw_str}")
+print(f"Conclusión: {conclusion_kw}")
+
+# Exportación: tabla de resultados de la prueba
+grados_libertad = df_muestra_clean['Modo Transporte'].nunique() - 1
+
+tabla_kruskal = pd.DataFrame({
+    "Elemento": [
+        "H0",
+        "H1",
+        "Estadístico (H)",
+        "Grados de libertad",
+        "Valor p",
+        "Nivel de significancia (alfa)",
+        "Decisión"
+    ],
+    "Valor": [
+        "Las medianas de Valor FOB son iguales entre modos de transporte",
+        "Al menos un modo de transporte difiere en Valor FOB",
+        f"{estadistico_h:.4f}",
+        f"{grados_libertad}",
+        p_valor_kw_str,
+        f"{alfa}",
+        conclusion_kw
+    ]
+})
+
+exportar_imagen("Doc/anexos/tabla_kruskal_valor_fob.png")
+dfi.export(tabla_kruskal.style.hide(axis='index'),
+           "Doc/anexos/tabla_kruskal_valor_fob.png")
+
+# Visualización: boxplot de Valor FOB (USD) por Modo de Transporte.
+plt.figure(figsize=(9, 6))
+sns.boxplot(data=df_muestra_clean, x='Modo Transporte',
+            y='Valor FOB (USD)', color="#4C72B0")
+plt.title('Valor FOB (USD) por Modo de Transporte', fontsize=14)
+plt.xlabel('Modo de Transporte', fontsize=12)
+plt.ylabel('Valor FOB (USD)', fontsize=12)
+plt.tight_layout()
+exportar_imagen('Doc/anexos/boxplot_fob_por_transporte.png')
+plt.savefig('Doc/anexos/boxplot_fob_por_transporte.png', dpi=300)
+plt.close()
+
+# Correlación de Spearman
+# Relación entre Peso Neto (Kg) y Valor FOB (USD)
+rho, p_valor_spearman = spearmanr(
+    df_muestra_clean['Peso Neto (Kg)'],
+    df_muestra_clean['Valor FOB (USD)']
+)
+
+if p_valor_spearman < 0.001:
+    p_valor_spearman_str = "< 0.001"
+else:
+    p_valor_spearman_str = f"{p_valor_spearman:.3f}"
+
+alfa = 0.05
+if p_valor_spearman > alfa:
+    conclusion_spearman = "NO se rechaza H0. No hay evidencia suficiente de correlación entre Peso Neto y Valor FOB."
+else:
+    conclusion_spearman = "SE RECHAZA H0. Existe evidencia estadística de correlación entre Peso Neto y Valor FOB."
+
+print(f"\nCoeficiente de Spearman (rho): {rho:.4f}")
+print(f"Valor p: {p_valor_spearman_str}")
+print(f"Conclusión: {conclusion_spearman}")
+
+# Intervalo de confianza al 95% para rho, mediante la transformación Z de Fisher.
+n = len(df_muestra_clean)
+# Paso 1: transformar rho a escala Z
+z_fisher = np.arctanh(rho)
+error_estandar = 1 / np.sqrt(n - 3)         # Error estándar en escala Z
+z_critico = 1.96                            # Valor crítico para 95% de confianza
+
+z_inferior = z_fisher - z_critico * error_estandar
+z_superior = z_fisher + z_critico * error_estandar
+
+ic_inferior = np.tanh(z_inferior)           # Paso 2: revertir a escala rho
+ic_superior = np.tanh(z_superior)
+
+print(f"IC 95% para rho: [{ic_inferior:.4f}, {ic_superior:.4f}]")
+
+# Exportación: tabla de resultados de la correlación
+tabla_spearman = pd.DataFrame({
+    "Elemento": [
+        "H0",
+        "H1",
+        "Coeficiente de Spearman (rho)",
+        "IC 95% para rho",
+        "Valor p",
+        "Nivel de significancia (alfa)",
+        "Decisión"
+    ],
+    "Valor": [
+        "No existe correlación monótona entre Peso Neto y Valor FOB (rho=0)",
+        "Existe correlación monótona entre Peso Neto y Valor FOB (rho≠0)",
+        f"{rho:.4f}",
+        f"[{ic_inferior:.4f}, {ic_superior:.4f}]",
+        p_valor_spearman_str,
+        f"{alfa}",
+        conclusion_spearman
+    ]
+})
+
+exportar_imagen("Doc/anexos/tabla_spearman_peso_valor.png")
+dfi.export(tabla_spearman.style.hide(axis='index'),
+           "Doc/anexos/tabla_spearman_peso_valor.png")
+
+# Visualización: diagrama de dispersión entre Peso Neto y Valor FOB,
+# como evidencia visual que complementa el coeficiente numérico.
+plt.figure(figsize=(8, 6))
+sns.scatterplot(data=df_muestra_clean, x='Peso Neto (Kg)', y='Valor FOB (USD)',
+                alpha=0.5, color="#4C72B0")
+plt.title('Relación entre Peso Neto y Valor FOB (USD)', fontsize=14)
+plt.xlabel('Peso Neto (Kg)', fontsize=12)
+plt.ylabel('Valor FOB (USD)', fontsize=12)
+plt.tight_layout()
+exportar_imagen('Doc/anexos/scatter_peso_vs_fob.png')
+plt.savefig('Doc/anexos/scatter_peso_vs_fob.png', dpi=300)
 plt.close()
