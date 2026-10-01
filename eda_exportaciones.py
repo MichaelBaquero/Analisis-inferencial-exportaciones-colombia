@@ -516,3 +516,17 @@ plt.tight_layout()
 exportar_imagen('Doc/anexos/scatter_peso_vs_fob.png')
 plt.savefig('Doc/anexos/scatter_peso_vs_fob.png', dpi=300)
 plt.close()
+
+# ------------------------------------------------------------
+# Exportación de la muestra limpia para Power BI
+# ------------------------------------------------------------
+# Se exporta df_muestra_clean (1.106 registros, sin outliers), que es
+# la misma muestra usada en las pruebas inferenciales, para que las
+# visualizaciones de Power BI sean consistentes con los resultados del
+# informe. Gracias a random_state=42, la muestra es reproducible.
+ruta_bi_xlsx = "Data/muestra_limpia_exportaciones.xlsx"
+
+df_muestra_clean.to_excel(ruta_bi_xlsx, index=False)
+
+print(f"\nMuestra limpia exportada: {df_muestra_clean.shape[0]} filas, "
+      f"{df_muestra_clean.shape[1]} columnas")
