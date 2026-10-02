@@ -627,11 +627,34 @@ el modelo de regresión lineal en el Proyecto Final.
 % ============================================================
 \section{Discusión}
 
-% TODO (Angie): redactar mínimo 2 párrafos interpretando los
-% resultados de ambas pruebas (Kruskal-Wallis y Spearman) en el
-% contexto del problema de investigación -- qué implicaciones tienen
-% para empresas exportadoras y política de comercio exterior,
-% apoyándose en las visualizaciones de Power BI.
+\subsection{Qué significan los resultados}
+
+\textbf{El peso es una buena señal del valor, pero no la única.} Como la relación entre peso y valor es fuerte (0,76), un envío más pesado suele valer más. Pero entre los envíos livianos hay de todo: mercancía barata y mercancía muy valiosa, como productos electrónicos o flores. Por eso el peso solo no alcanza para saber cuánto vale un envío.
+
+\textbf{El modo de transporte dice mucho del tipo de envío.} Casi la mitad de los envíos (547 de 1.106) va por aire, pero son los más livianos: pesan unos 132 kg en promedio, frente a unos 848 kg en los marítimos y 699 kg en los terrestres. El aéreo mueve muchos envíos pequeños y de menor valor típico, mientras que el marítimo mueve cargas más grandes y de más valor.
+
+\textbf{Enviar más peso es más barato por kilo.} El flete sube con el peso, pero mucho más despacio que el peso. Un envío de más de 630 kg paga en promedio unos 135 dólares y uno de hasta 12 kg paga unos 6. Calculado por kilo, el costo baja de unos 1,26 dólares por kilo en los envíos más livianos a unos 0,07 en los más pesados.
+
+\textbf{El aéreo es el modo más caro por kilo.} Cuesta cerca de nueve veces más que el marítimo o el terrestre (0,61 frente a 0,07 dólares por kilo). El aéreo concentra cerca del 59\,\% de todo el dinero pagado en fletes, aunque mueve solo cerca del 14\,\% del peso total.
+
+\subsection{Qué decisiones permiten tomar}
+
+\begin{itemize}
+\item \textbf{Para una empresa exportadora:} agrupar varios envíos pequeños en uno más grande baja el costo por kilo. El aéreo conviene para mercancía de mucho valor o con urgencia, y el marítimo o terrestre para cargas pesadas.
+\item \textbf{Para quien diseña política de comercio exterior:} los exportadores pequeños, que envían poco peso por vez, son los que más pagan por kilo. Esto apoya ideas como la carga consolidada o el apoyo logístico para pequeños exportadores.
+\item \textbf{Para el seguimiento de las estadísticas:} conviene revisar por qué en 71\,\% de los envíos el flete aparece en cero, porque esto afecta cualquier cálculo de costos.
+\end{itemize}
+
+\subsection{Limitaciones}
+
+\begin{itemize}
+\item Los datos son de un solo mes (junio de 2026) y de una muestra de 1.500 envíos.
+\item Se retiró el 26,27\,\% de los envíos por ser extremos, así que las conclusiones valen para envíos típicos y no para los grandes exportadores.
+\item En 790 de los 1.106 envíos el flete aparece en cero. Los costos por kilo son promedios que incluyen esos casos y probablemente quedan por debajo del costo real.
+\item Instalaciones fijas solo tiene 2 envíos, así que no se puede concluir nada sobre ese modo.
+\item La comparación de fletes entre modos de transporte se hizo con gráficos, sin una prueba estadística. La prueba formal (Kruskal-Wallis) se aplicó al Valor FOB.
+\item Que dos cosas vayan juntas no prueba que una cause la otra: el peso se relaciona con el valor y con el flete, pero no lo determina por sí solo.
+\end{itemize}
 
 \newpage
 
