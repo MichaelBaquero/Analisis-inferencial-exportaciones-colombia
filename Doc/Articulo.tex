@@ -5,6 +5,7 @@
 \usepackage[spanish]{babel}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{booktabs}
+\usepackage{amsmath}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{graphicx}
@@ -32,7 +33,7 @@
     literate=
       {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
       {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
-      {ñ}{{\~n}}1 {Ñ}{{\~N}}1
+      {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {≠}{{$\neq$}}1
 }
 
 \begin{document}
@@ -44,14 +45,14 @@
     \centering
     \includegraphics[width=0.35\textwidth]{anexos/logo.png}\\[1.5cm]
 
-    {\LARGE \textbf{Análisis Exploratorio de Exportaciones Colombianas}}\\[0.3cm]
+    {\LARGE \textbf{Análisis Exploratorio e Inferencial de Exportaciones Colombianas}}\\[0.3cm]
     {\Large (Junio 2026)}\\[2cm]
 
-    {\large Angie Paola Montero Tique \\ Michael Yesid Baquero Gomez}\\[1.5cm]
+    {\large Angie Montero \\ Michael Baquero}\\[1.5cm]
 
     {\large Analítica Descriptiva II}\\[0.2cm]
     {\large Unicafam}\\[0.2cm]
-    {\large Agosto 2026}
+    {\large Octubre 2026}
 
     \vfill
 \end{titlepage}
@@ -122,9 +123,113 @@ una muestra final de 1.106 registros para el análisis.
 \newpage
 
 % ============================================================
-% 2. Descripción del dataset
+% 2. Marco teórico
 % ============================================================
-\section{Descripción del dataset}
+\section{Marco teórico}
+
+\subsection*{Distribuciones de probabilidad y supuesto de normalidad}
+
+Muchas pruebas estadísticas paramétricas (como la prueba t o el ANOVA)
+asumen que la variable analizada sigue una distribución normal. Para
+verificar este supuesto se utilizó la prueba de \textbf{Shapiro-Wilk}
+\cite{shapirowilk1965}, cuyo estadístico \(W\) se calcula como:
+
+\[
+W = \frac{\left( \sum_{i=1}^{n} a_i x_{(i)} \right)^2}{\sum_{i=1}^{n} (x_i - \bar{x})^2}
+\]
+
+donde \(x_{(i)}\) son los valores ordenados de la muestra y \(a_i\)
+son coeficientes derivados de los momentos esperados de una
+distribución normal. Valores de \(W\) cercanos a 1 indican mayor
+compatibilidad con la normalidad. En este proyecto, la prueba aplicada
+sobre \emph{Valor FOB (USD)} arrojó \(W = 0.6277\) (\(p < 0.001\)),
+rechazando el supuesto de normalidad. Esto condiciona la elección de
+las pruebas inferenciales posteriores, que deben ser de tipo
+\textbf{no paramétrico}.
+
+\subsection*{Lógica de las pruebas de hipótesis}
+
+Toda prueba de hipótesis contrasta una hipótesis nula (\(H_0\)), que
+representa la ausencia de efecto o diferencia, contra una hipótesis
+alternativa (\(H_1\)). Se define un nivel de significancia
+\(\alpha\) (en este estudio, \(\alpha = 0.05\)) como el umbral máximo
+de probabilidad aceptable de rechazar \(H_0\) siendo esta verdadera
+(error tipo I). El \textbf{valor \(p\)} obtenido se compara contra
+\(\alpha\): si \(p < \alpha\), se rechaza \(H_0\); de lo contrario, no
+se rechaza.
+
+\subsection*{Prueba de Kruskal-Wallis}
+
+La prueba de Kruskal-Wallis \cite{kruskalwallis1952} es el equivalente
+no paramétrico del ANOVA de un factor. Se utiliza para comparar si
+más de dos grupos independientes provienen de la misma distribución,
+sin asumir normalidad. En lugar de trabajar con los valores originales,
+la prueba convierte todas las observaciones en rangos y calcula el
+estadístico:
+
+\[
+H = \frac{12}{N(N+1)} \sum_{i=1}^{k} \frac{R_i^2}{n_i} - 3(N+1)
+\]
+
+donde \(k\) es el número de grupos, \(N\) el tamaño total de la
+muestra, \(n_i\) el tamaño del grupo \(i\), y \(R_i\) la suma de
+rangos del grupo \(i\). Bajo \(H_0\), el estadístico \(H\) sigue
+aproximadamente una distribución chi-cuadrado con \(k-1\) grados de
+libertad. Se eligió esta prueba, en lugar de ANOVA, debido a que
+\emph{Valor FOB (USD)} no cumple el supuesto de normalidad.
+
+\subsection*{Correlación de Spearman}
+
+El coeficiente de correlación de Spearman \cite{spearman1904}, denotado
+\(\rho\), mide la fuerza y dirección de una relación \textbf{monótona}
+entre dos variables cuantitativas, sin asumir linealidad ni
+normalidad. Se calcula aplicando la fórmula de Pearson sobre los
+rangos de las observaciones:
+
+\[
+\rho = 1 - \frac{6 \sum_{i=1}^{n} d_i^2}{n(n^2-1)}
+\]
+
+donde \(d_i\) es la diferencia entre los rangos de cada par de
+observaciones y \(n\) el número de observaciones. El coeficiente toma
+valores entre \(-1\) y \(1\); valores cercanos a los extremos indican
+una relación monótona fuerte (positiva o negativa), mientras que
+valores cercanos a 0 indican ausencia de relación monótona.
+
+\subsection*{Intervalos de confianza}
+
+Un intervalo de confianza (IC) proporciona un rango de valores
+plausibles para un parámetro poblacional, con un nivel de confianza
+dado (en este estudio, 95\,\%). Para el coeficiente de correlación de
+Spearman, dado que \(\rho\) no sigue una distribución normal, el IC se
+construye mediante la \textbf{transformación Z de Fisher}:
+
+\[
+Z = \operatorname{arctanh}(\rho) = \frac{1}{2}\ln\left(\frac{1+\rho}{1-\rho}\right)
+\]
+
+En la escala \(Z\), el estadístico se distribuye aproximadamente
+normal con error estándar \(\frac{1}{\sqrt{n-3}}\), lo cual permite
+construir el intervalo \(Z \pm 1.96 \times \text{EE}\) y revertirlo a
+la escala original de \(\rho\) mediante la función tangente hiperbólica
+inversa (\(\tanh\)).
+
+\newpage
+
+% ============================================================
+% 3. Metodología
+% ============================================================
+\section{Metodología}
+
+\subsection*{Tipo y diseño del estudio}
+
+El presente estudio es de tipo \textbf{cuantitativo}, con un diseño
+\textbf{no experimental, transversal} (los datos corresponden a un
+único corte temporal: junio de 2026) y un alcance
+\textbf{descriptivo-correlacional}, ya que busca tanto caracterizar
+las variables de exportación como establecer relaciones entre ellas.
+
+\subsection*{Descripción del dataset}
 
 Los datos utilizados en este estudio provienen de la base de
 \textbf{Estadísticas de Comercio Exterior -- Exportaciones}, publicada
@@ -137,15 +242,14 @@ agosto de 2026 desde
 El archivo original contiene un total de 103.179 registros y 72 variables.
 Dentro de este conjunto de datos, se identificaron 44 columnas de tipo numérico y 28 columnas de tipo categórico o texto, tal como se resume en la Tabla~\ref{tab:resumen_original}.
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{anexos/tabla_resumen_original.png}
     \caption{Resumen del dataset original de exportaciones (junio 2026).}
     \label{tab:resumen_original}
-\end{figure}
+\end{table}
 \FloatBarrier
 
-\subsection*{Exploración de variables categóricas}
 Para determinar qué variables categóricas eran adecuadas para las
 pruebas de hipótesis del proyecto, se realizó una exploración inicial
 sobre las variables candidatas: \texttt{MODO\_TRANSPORTE},
@@ -155,12 +259,12 @@ fue evaluar el número de categorías únicas presentes en cada una, ya que
 un número excesivo de categorías dificulta el análisis estadístico
 (Tabla~\ref{tab:categoricas}).
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
     \includegraphics[width=0.5\textwidth]{anexos/tabla_categoricas.png}
     \caption{Número de categorías únicas por variable categórica candidata.}
     \label{tab:categoricas}
-\end{figure}
+\end{table}
 \FloatBarrier
 
 Con base en este análisis, se identificó que la variable
@@ -170,7 +274,6 @@ pruebas de hipótesis del tipo chi-cuadrado, ya que generaría una matriz
 de contingencia demasiado dispersa y sin poder explicativo. Por lo tanto,
 se decidió excluirla del análisis.
 
-\subsection*{Selección de variables finales}
 Tras la exclusión de \texttt{PAIS\_DESTINO\_FINAL}, se seleccionaron
 11 variables relevantes que orientan el desarrollo de la pregunta de
 investigación y el modelo de regresión final. Esta selección incluye
@@ -178,22 +281,21 @@ tanto variables cuantitativas (como valores monetarios y pesos) como
 variables categóricas de baja cardinalidad. La descripción técnica de
 cada variable seleccionada se presenta en la Tabla~\ref{tab:variables_seleccionadas}.
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{anexos/tabla_variables_seleccionadas.png}
     \caption{Variables seleccionadas del dataset de exportaciones.}
     \label{tab:variables_seleccionadas}
-\end{figure}
+\end{table}
 \FloatBarrier
 
-\subsection*{Muestreo y tratamiento de outliers}
+\subsection*{Proceso de limpieza y muestreo}
 
 Dado el volumen del dataset filtrado y con el fin de optimizar los
 recursos computacionales, se optó por trabajar con una muestra aleatoria
 simple de 1.500 registros. Se fijó una semilla aleatoria
 (\texttt{random\_state=42}) para garantizar la reproducibilidad de los
-resultados. Esta reducción evita sobrecargar el modelo de regresión
-lineal y reduce significativamente los tiempos de ejecución.
+resultados.
 
 Una vez extraída la muestra, se aplicó un procedimiento sistemático
 para detectar y excluir valores atípicos (outliers) sobre tres
@@ -205,59 +307,86 @@ menos una de las tres variables. La Tabla~\ref{tab:outliers} resume los
 estadísticos clave de este procedimiento, detallados por variable, así
 como el total combinado.
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{anexos/tabla_outliers_muestra.png}
     \caption{Estadísticos de detección de outliers sobre la muestra (n=1500), por variable.}
     \label{tab:outliers}
-\end{figure}
+\end{table}
 \FloatBarrier
 
 En total se detectaron \textbf{394 registros atípicos} (26.27\,\% de la
-muestra), considerando la unión de valores extremos en las tres
-variables analizadas: 223 en \emph{Valor FOB (USD)} (14.87\,\%), 267 en
-\emph{Peso Neto (Kg)} (17.80\,\%) y 269 en \emph{Cant. Unidades}
-(17.93\,\%). Estos registros se excluyeron para obtener una muestra
+muestra). Estos registros se excluyeron para obtener una muestra
 depurada de \textbf{1.106} registros, sobre la cual se realizó el
-análisis exploratorio y las pruebas de normalidad.
-
-La Tabla~\ref{tab:dimensiones_muestra} compara las dimensiones de la
+análisis exploratorio y las pruebas inferenciales. La
+Tabla~\ref{tab:dimensiones_muestra} compara las dimensiones de la
 muestra inicial (con outliers) y la muestra final sin outliers.
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
     \includegraphics[width=0.6\textwidth]{anexos/tabla_dimensiones_muestra.png}
     \caption{Comparación de dimensiones: muestra inicial vs. muestra sin outliers.}
     \label{tab:dimensiones_muestra}
-\end{figure}
+\end{table}
 \FloatBarrier
 
 A modo de ejemplo tangible, la Tabla~\ref{tab:muestra_head} presenta
-las primeras cinco filas de la muestra de trabajo ya depurada. Se puede
-observar cómo se estructuran los datos de las variables cuantitativas y
-categóricas seleccionadas para el estudio.
+las primeras cinco filas de la muestra de trabajo ya depurada.
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth]{anexos/tabla_muestra_head.png}
     \caption{Primeras 5 filas de la muestra final (sin outliers).}
     \label{tab:muestra_head}
-\end{figure}
+\end{table}
 \FloatBarrier
+
+\subsection*{Técnicas inferenciales aplicadas}
+
+La Tabla~\ref{tab:tecnicas} resume las técnicas inferenciales
+seleccionadas para este avance y su justificación, derivada
+directamente del supuesto de normalidad evaluado en la sección de
+Análisis exploratorio.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{p{3.2cm}p{4.5cm}p{6.5cm}}
+\toprule
+\textbf{Técnica} & \textbf{Variables} & \textbf{Justificación} \\
+\midrule
+Shapiro-Wilk & Valor FOB (USD) & Verificar supuesto de normalidad antes de elegir pruebas paramétricas o no paramétricas. \\
+Kruskal-Wallis & Valor FOB (USD) vs. Modo Transporte & Comparación de más de 2 grupos independientes; no asume normalidad, a diferencia de ANOVA. \\
+Correlación de Spearman & Peso Neto (Kg) vs. Valor FOB (USD) & Mide relación monótona entre variables cuantitativas sin asumir linealidad ni normalidad. \\
+\bottomrule
+\end{tabular}
+\caption{Técnicas inferenciales aplicadas y su justificación.}
+\label{tab:tecnicas}
+\end{table}
+
+\subsection*{Herramientas computacionales}
+
+El análisis se desarrolló en \textbf{Python}, utilizando las
+siguientes librerías: \texttt{pandas} para manipulación de datos,
+\texttt{scipy.stats} para las pruebas estadísticas (\texttt{shapiro},
+\texttt{kruskal}, \texttt{spearmanr}), \texttt{numpy} para el cálculo
+del intervalo de confianza mediante la transformación de Fisher,
+\texttt{matplotlib} y \texttt{seaborn} para las visualizaciones, y
+\texttt{dataframe\_image} para la exportación de tablas como imágenes
+incluidas en este documento.
 
 \newpage
 
 % ============================================================
-% 3. Análisis exploratorio (EDA)
+% 4. Análisis exploratorio (EDA)
 % ============================================================
 \section{Análisis exploratorio}
 
-A partir de la muestra depurada descrita en la sección anterior, se
-llevó a cabo un análisis exploratorio que incluye la estadística
+A partir de la muestra depurada descrita en la sección de Metodología,
+se llevó a cabo un análisis exploratorio que incluye la estadística
 descriptiva de las variables cuantitativas, visualizaciones
 comparativas antes y después del tratamiento de outliers, y la
 verificación formal del supuesto de normalidad, como base para las
-etapas posteriores de prueba de hipótesis y regresión lineal.
+pruebas inferenciales presentadas en la siguiente sección.
 
 \subsection{Estadística descriptiva}
 
@@ -270,146 +399,372 @@ resultados sobre la muestra con outliers, mientras que la
 Tabla~\ref{tab:estad_sin} presenta los mismos estadísticos sobre la
 muestra sin outliers.
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
     \includegraphics[width=\textwidth]{anexos/tabla_estadisticos_con_outliers.png}
     \caption{Estadística descriptiva de las variables numéricas -- muestra con outliers.}
     \label{tab:estad_con}
-\end{figure}
+\end{table}
 \FloatBarrier
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
     \includegraphics[width=\textwidth]{anexos/tabla_estadisticos_sin_outliers.png}
     \caption{Estadística descriptiva de las variables numéricas -- muestra sin outliers.}
     \label{tab:estad_sin}
-\end{figure}
+\end{table}
 \FloatBarrier
 
 Al ampliar el criterio IQR a tres variables (Valor FOB, Peso Neto y
-Cant. Unidades), la mejora en la forma de la distribución es aún más
-marcada que con el tratamiento aplicado únicamente a Valor FOB. La
-asimetría de \emph{Valor FOB (USD)} se reduce de \textbf{36.49} a
-\textbf{2.73}, y la de \emph{Peso Neto (Kg)} de \textbf{38.29} a
-\textbf{2.95}. La desviación estándar de \emph{Valor FOB (USD)} cae de
-\(916{,}701.21\) a \(4{,}675.58\), quedando en un orden de magnitud
-comparable al de su media (\(2{,}860.39\)). Este resultado confirma que
-el tratamiento conjunto de outliers en las tres variables produce una
-muestra considerablemente más representativa del comportamiento típico
-de las exportaciones, sin la distorsión que generaban los valores
-extremos de peso y cantidad que no se habían tratado en la primera
-versión del análisis.
+Cant. Unidades), la mejora en la forma de la distribución es
+considerable. La asimetría de \emph{Valor FOB (USD)} se reduce de
+\textbf{36.49} a \textbf{2.73}, y la de \emph{Peso Neto (Kg)} de
+\textbf{38.29} a \textbf{2.95}. La desviación estándar de
+\emph{Valor FOB (USD)} cae de \(916{,}701.21\) a \(4{,}675.58\),
+quedando en un orden de magnitud comparable al de su media
+(\(2{,}860.39\)).
 
 \subsection{Visualizaciones}
 
-Las Figuras~\ref{fig:hist_fob_con}--\ref{fig:hist_peso_sin} presentan
-los histogramas de \emph{Valor FOB (USD)} y \emph{Peso Neto (Kg)},
-antes y después de la exclusión de outliers, permitiendo observar el
-cambio en la forma de la distribución.
+Las Figuras~\ref{fig:hist_fob} y~\ref{fig:hist_peso} presentan los
+histogramas de \emph{Valor FOB (USD)} y \emph{Peso Neto (Kg)}, cada uno
+con dos paneles: la muestra original a la izquierda y la muestra
+depurada a la derecha, de modo que el efecto del tratamiento de outliers
+se aprecia directamente en una misma escala.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.7\textwidth]{anexos/histograma_valor_fob_con_outliers.png}
-    \caption{Distribución de Valor FOB (USD) -- muestra con outliers.}
-    \label{fig:hist_fob_con}
+    \includegraphics[width=\textwidth]{anexos/histograma_valor_fob.png}
+    \caption{Distribución de Valor FOB (USD): muestra con outliers (izquierda) y sin outliers (derecha).}
+    \label{fig:hist_fob}
 \end{figure}
 \FloatBarrier
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.7\textwidth]{anexos/histograma_valor_fob_sin_outliers.png}
-    \caption{Distribución de Valor FOB (USD) -- muestra sin outliers.}
-    \label{fig:hist_fob_sin}
+    \includegraphics[width=\textwidth]{anexos/histograma_peso_neto.png}
+    \caption{Distribución de Peso Neto (Kg): muestra con outliers (izquierda) y sin outliers (derecha).}
+    \label{fig:hist_peso}
 \end{figure}
 \FloatBarrier
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{anexos/histograma_peso_neto_con_outliers.png}
-    \caption{Distribución de Peso Neto (Kg) -- muestra con outliers.}
-    \label{fig:hist_peso_con}
-\end{figure}
-\FloatBarrier
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{anexos/histograma_peso_neto_sin_outliers.png}
-    \caption{Distribución de Peso Neto (Kg) -- muestra sin outliers.}
-    \label{fig:hist_peso_sin}
-\end{figure}
-\FloatBarrier
-
-Los histogramas con outliers (Figuras~\ref{fig:hist_fob_con} y
-\ref{fig:hist_peso_con}) muestran prácticamente la totalidad de las
-observaciones concentradas en una única barra cercana a cero, con el
-resto del eje horizontal vacío -- consecuencia de que unos pocos
-valores extremos estiran la escala del gráfico hasta comprimir toda la
-variabilidad real en un rango casi imperceptible. Al excluir los
-outliers en las tres variables (Figuras~\ref{fig:hist_fob_sin} y
-\ref{fig:hist_peso_sin}), ambas distribuciones recuperan una forma
+En los paneles izquierdos de ambas figuras, la totalidad de las
+observaciones se concentra en una única barra cercana a cero, porque un
+solo valor extremo obliga a comprimir la escala. Al excluir los outliers
+(paneles derechos), ambas distribuciones recuperan una forma
 interpretable: una alta concentración de exportaciones de bajo valor y
-peso, seguida de una cola derecha decreciente que refleja un número
-menor de exportaciones de mayor magnitud. Esta forma, característica de
-una distribución de tipo log-normal, respalda la recomendación de
-aplicar una transformación logarítmica antes de construir el modelo de
-regresión lineal.
+peso, seguida de una cola derecha decreciente -- forma característica
+de una distribución log-normal, que respalda la recomendación de
+aplicar una transformación logarítmica en el modelo de regresión del
+Proyecto Final.
 
 \subsection{Verificación de normalidad}
 
 Como evidencia inicial del problema de normalidad, la
-Figura~\ref{fig:qqplot_con_outliers} muestra el gráfico Q-Q de la
-muestra de 1.500 registros antes de excluir valores atípicos, donde se
-observa una clara desviación de los puntos respecto a la línea de
-referencia en los cuantiles superiores, evidenciando la presencia de
-colas pesadas y valores extremos.
+Figura~\ref{fig:qqplot_normalidad} compara los gráficos Q-Q de la
+muestra de 1.500 registros antes de excluir valores atípicos (panel
+izquierdo) y de la muestra depurada de 1.106 registros (panel derecho).
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.6\textwidth]{anexos/qqplot_muestra_con_outliers.png}
-    \caption{Gráfico Q-Q para la muestra inicial (con outliers).}
-    \label{fig:qqplot_con_outliers}
-\end{figure}
-\FloatBarrier
+Tras la exclusión de los 394 outliers, se aplicó la prueba de
+Shapiro-Wilk sobre la muestra depurada de 1.106 registros:
 
-Tras la exclusión de los 394 outliers detectados mediante el método IQR
-sobre las tres variables analizadas (ver sección de Muestreo y
-tratamiento de outliers), se aplicó la prueba de Shapiro-Wilk sobre la
-muestra depurada de 1.106 registros para evaluar formalmente el
-supuesto de normalidad de la variable \emph{Valor FOB (USD)}.
-
-Los resultados obtenidos fueron los siguientes:
 \begin{itemize}
     \item Estadístico de prueba (\(W\)): \textbf{0.6277}
     \item Valor \(p\): \textbf{< 0.001}
 \end{itemize}
 
-Dado que el valor \(p\) es inferior al nivel de significancia
-\(\alpha = 0.05\), se \textbf{rechaza la hipótesis nula}. Existe
-evidencia estadística de que la variable \emph{Valor FOB (USD)}, incluso
-tras la exclusión conjunta de outliers en Valor FOB, Peso Neto y
-Cant. Unidades, \textbf{no sigue una distribución normal}. El gráfico
-Q-Q de la Figura~\ref{fig:qqplot_sin_outliers} respalda este resultado:
-si bien el punto extremo aislado que se observaba en la muestra original
-desaparece, los cuantiles muestrales siguen desviándose de la línea de
-referencia de forma sistemática -- por debajo de la diagonal en los
-cuantiles inferiores y por encima en los superiores -- patrón típico de
-una distribución con cola derecha más pesada que la normal, coherente
-con la asimetría de \textbf{2.73} reportada en la sección de estadística
-descriptiva.
+Dado que \(p < \alpha = 0.05\), se \textbf{rechaza la hipótesis nula}:
+\emph{Valor FOB (USD)}, incluso tras el tratamiento de outliers,
+\textbf{no sigue una distribución normal}. La
+Figura~\ref{fig:qqplot_normalidad} respalda este resultado: en el panel
+izquierdo, un único punto extremo domina la escala y separa la nube de
+la línea de referencia; en el panel derecho ese punto desaparece, pero
+los cuantiles siguen desviándose de forma sistemática de la línea,
+coherente con la asimetría residual de \textbf{2.73}. Este resultado
+justifica el uso de pruebas \textbf{no paramétricas} (Kruskal-Wallis y
+correlación de Spearman) en la siguiente sección.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.6\textwidth]{anexos/qqplot_muestra_sin_outliers.png}
-    \caption{Gráfico Q-Q para la muestra sin outliers.}
-    \label{fig:qqplot_sin_outliers}
+    \includegraphics[width=\textwidth]{anexos/qqplot_normalidad_antes_despues.png}
+    \caption{Gráficos Q-Q de Valor FOB (USD): muestra con outliers (izquierda) y sin outliers (derecha).}
+    \label{fig:qqplot_normalidad}
 \end{figure}
 \FloatBarrier
 
-En consecuencia, para el modelo de regresión lineal que se desarrollará
-en etapas posteriores, se recomienda aplicar una transformación
-logarítmica a la variable \emph{Valor FOB (USD)} con el fin de
-aproximar su comportamiento a una distribución normal y cumplir con los
-supuestos del modelo.
+\newpage
+
+% ============================================================
+% 5. Resultados
+% ============================================================
+\section{Resultados}
+
+\subsection{Prueba 1: Kruskal-Wallis -- Valor FOB según Modo de Transporte}
+
+Previo a la prueba, se verificó la distribución de observaciones por
+categoría de \emph{Modo Transporte} en la muestra depurada
+(Tabla~\ref{tab:conteo_transporte}).
+
+\begin{table}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{anexos/tabla_conteo_modo_transporte.png}
+    \caption{Conteo de observaciones por Modo de Transporte (muestra sin outliers).}
+    \label{tab:conteo_transporte}
+\end{table}
+\FloatBarrier
+
+Se observa un marcado desbalance: los modos Aéreo (547) y Marítimo
+(414) concentran la gran mayoría de las observaciones, mientras que
+\emph{Instalaciones Fijas} cuenta con apenas 2 registros. Esta
+limitación se tiene en cuenta al interpretar el resultado, ya que un
+grupo con tan pocas observaciones aporta escasa información estadística
+y reduce la precisión de las comparaciones entre modos.
+
+Se aplicó la prueba de Kruskal-Wallis para contrastar si el
+\emph{Valor FOB (USD)} difiere entre los cuatro modos de transporte.
+Los resultados se presentan en la Tabla~\ref{tab:kruskal}.
+
+\begin{table}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{anexos/tabla_kruskal_valor_fob.png}
+    \caption{Resultados de la prueba de Kruskal-Wallis.}
+    \label{tab:kruskal}
+\end{table}
+\FloatBarrier
+
+Con un estadístico \(H = 87.3240\) (\(gl = 3\)) y un valor
+\(p < 0.001\), se \textbf{rechaza la hipótesis nula}: existe evidencia
+estadística sólida de que al menos un modo de transporte difiere de
+los demás en términos de Valor FOB. La Figura~\ref{fig:boxplot_transporte}
+ilustra esta diferencia mediante un diagrama de cajas por grupo.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{anexos/boxplot_fob_por_transporte.png}
+    \caption{Valor FOB (USD) por Modo de Transporte.}
+    \label{fig:boxplot_transporte}
+\end{figure}
+\FloatBarrier
+
+El boxplot muestra que, entre los tres modos con mayor número de
+observaciones, \emph{Marítimo} presenta la mediana más alta, seguido de
+\emph{Terrestre} y \emph{Aéreo}, aunque los tres grupos conservan una
+dispersión interna considerable, con numerosos valores por encima de
+sus propios bigotes -- consistente con la asimetría residual de la
+variable incluso tras el tratamiento global de outliers. El grupo
+\emph{Instalaciones Fijas}, al contar con solo 2 observaciones, no
+permite una comparación concluyente; su mediana es la más alta del
+gráfico, pero está calculada sobre dos registros y no presenta puntos
+marcados como atípicos, lo cual es resultado directo de su tamaño
+reducido y no de una menor variabilidad real.
+
+\subsection{Prueba 2: Correlación de Spearman -- Peso Neto y Valor FOB}
+
+Se calculó la correlación de Spearman entre \emph{Peso Neto (Kg)} y
+\emph{Valor FOB (USD)} sobre la muestra depurada de 1.106 registros.
+Los resultados se presentan en la Tabla~\ref{tab:spearman}.
+
+\begin{table}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{anexos/tabla_spearman_peso_valor.png}
+    \caption{Resultados de la correlación de Spearman entre Peso Neto y Valor FOB.}
+    \label{tab:spearman}
+\end{table}
+\FloatBarrier
+
+Se obtuvo un coeficiente \(\rho = 0.7597\), con un intervalo de
+confianza al 95\,\% de \([0.7336,\ 0.7836]\) y un valor
+\(p < 0.001\). Dado que el intervalo no incluye el cero y el valor
+\(p\) es inferior a \(\alpha = 0.05\), se \textbf{rechaza la hipótesis
+nula}: existe una correlación monótona positiva, fuerte y
+estadísticamente significativa entre el peso neto de la mercancía y
+su valor FOB. La Figura~\ref{fig:scatter_peso_fob} presenta el
+diagrama de dispersión correspondiente.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{anexos/scatter_peso_vs_fob.png}
+    \caption{Relación entre Peso Neto (Kg) y Valor FOB (USD).}
+    \label{fig:scatter_peso_fob}
+\end{figure}
+\FloatBarrier
+
+El diagrama de dispersión muestra una tendencia creciente consistente
+con el coeficiente obtenido: a mayor peso neto, el valor FOB tiende a
+ser mayor. Sin embargo, se observa una dispersión considerable,
+especialmente en los pesos bajos (cercanos a 0--500 kg), donde
+coexisten exportaciones de muy bajo y muy alto valor -- un patrón
+coherente con mercancías de alto valor unitario y bajo peso (por
+ejemplo, productos electrónicos o flores) que se mezclan con
+mercancías de bajo valor y peso similar. Este hallazgo refuerza la
+decisión, planteada en el Análisis exploratorio, de aplicar una
+transformación logarítmica a \emph{Valor FOB (USD)} antes de construir
+el modelo de regresión lineal en el Proyecto Final.
+
+\subsection{Complemento de los costos de flete, peso y modo de transporte}
+
+Además de estudiar la relación entre el peso neto y el valor FOB, se
+exploraron los costos de flete de los 1.106 registros de la muestra
+depurada. Estas visualizaciones complementan las pruebas inferenciales
+y permiten describir diferencias por peso y modo de transporte. Los
+resultados son descriptivos y deben interpretarse considerando que en
+790 registros (71.4\,\%) el flete aparece reportado como cero.
+
+La mayoría de los registros se concentra en fletes bajos o iguales a
+cero (Figura~\ref{fig:flete_peso_modo}). Solo 18 envíos presentan fletes
+de 1{,}000 USD o más, y 13 de ellos corresponden al modo aéreo. Los
+valores superiores a 2{,}000 USD aparecen en envíos con pesos brutos
+entre 275 y 2{,}864.8 kg. El mayor flete observado, de 4{,}178.69 USD,
+corresponde a un envío de 2{,}864.8 kg brutos. Por tanto, el peso se
+relaciona con el costo, pero no lo determina por sí solo: también
+intervienen el modo de transporte y las características de la
+mercancía.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{anexos/flete_vs_peso_por_modo.png}
+    \caption{Relación entre peso bruto y flete por modo de transporte (muestra sin outliers).}
+    \label{fig:flete_peso_modo}
+\end{figure}
+\FloatBarrier
+
+\subsection{Costo de flete por kilogramo y modo de transporte}
+
+El costo agregado por kilogramo se calculó como la suma de los fletes
+sobre la suma del peso bruto, porque el flete se cobra sobre el peso
+total del envío (mercancía más embalaje). Para el transporte aéreo, el
+costo es de aproximadamente 0.61 USD/kg, frente a 0.07 USD/kg para el
+marítimo y el terrestre (Figura~\ref{fig:costo_kg_modo}). En esta
+muestra, el costo por kilogramo del modo aéreo es cerca de nueve veces
+el de los otros dos modos. \emph{Instalaciones Fijas} presenta un valor
+de cero; sin embargo, este grupo cuenta con dos registros, por lo que
+no permite establecer una generalización. Como muchos registros tienen
+el flete reportado en cero, estos promedios pueden subestimar el costo
+efectivo.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{anexos/costo_kg_por_modo.png}
+    \caption{Costo de flete por kilogramo según modo de transporte.}
+    \label{fig:costo_kg_modo}
+\end{figure}
+\FloatBarrier
+
+\subsection{Flete promedio por rango de peso}
+
+El flete promedio aumenta a medida que crece el rango de peso bruto
+(Figura~\ref{fig:flete_rango_peso}): aproximadamente 5.61 USD para envíos
+de hasta 12 kg; 25.80 USD entre 12 y 42 kg; 40.82 USD entre 42 y
+140 kg; 121.21 USD entre 140 y 630 kg; y 134.79 USD para envíos de más
+de 630 kg. Aunque el flete total aumenta, lo hace en menor proporción
+que el peso, de modo que los envíos más pesados tienden a presentar un
+costo menor por kilogramo. Esta lectura debe tomarse como descriptiva y
+condicionada por los registros con flete igual a cero.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{anexos/flete_promedio_rango_peso.png}
+    \caption{Flete promedio según rango de peso bruto.}
+    \label{fig:flete_rango_peso}
+\end{figure}
+\FloatBarrier
+
+\newpage
+
+% ============================================================
+% 6. Discusión
+% ============================================================
+\section{Discusión}
+
+\subsection{Interpretación de los resultados}
+
+Los resultados muestran que el peso es un indicador relevante del
+valor de una exportación. La correlación de Spearman entre
+\emph{Peso Neto (Kg)} y \emph{Valor FOB (USD)} fue positiva y fuerte
+(\(\rho = 0.7597\), \(p < 0.001\)): a mayor peso, tiende a registrarse
+un mayor valor FOB. Sin embargo, la dispersión es amplia, sobre todo
+en pesos bajos, donde coexisten mercancías livianas de alto valor
+unitario (por ejemplo, productos electrónicos o flores) con mercancías
+de bajo valor y peso similar. Por eso el peso explica una parte
+importante de la relación, pero no la determina por sí solo.
+
+El modo de transporte también se asocia con el valor FOB. En la
+muestra depurada, entre los grupos con mayor número de observaciones,
+el transporte marítimo presenta la mediana más alta, seguido del
+terrestre y del aéreo; la prueba de Kruskal-Wallis confirmó que al
+menos un modo difiere (\(H = 87.3240\), \(gl = 3\), \(p < 0.001\)).
+Este resultado indica que el modo importa, pero no identifica por sí
+mismo qué pares de modos difieren ni controla por tipo de mercancía.
+
+En cuanto a los costos logísticos, el flete por kilogramo es mucho
+mayor en el modo aéreo (0.61 USD/kg) que en el marítimo y el terrestre
+(0.07 USD/kg en ambos), cerca de nueve veces. El costo por kilogramo
+refleja, en parte, las diferencias en el tipo de carga y en el valor
+unitario de los productos. Además, el flete debe interpretarse con
+cautela: depende de la urgencia, el tipo de producto, el destino y las
+condiciones contractuales, factores que no están en la base.
+
+\subsection{Limitaciones y uso de los resultados}
+
+El análisis se realizó sobre una muestra aleatoria de 1.500 registros,
+depurada hasta 1.106 observaciones tras excluir valores atípicos en
+\emph{Valor FOB (USD)}, \emph{Peso Neto (Kg)} y \emph{Cant. Unidades}.
+Por ello, los resultados describen mejor los envíos de menor escala y
+no representan necesariamente a los exportadores con operaciones
+extremas.
+
+En 790 de los 1.106 registros (71.4\,\%) el flete aparece en cero.
+Esto limita la interpretación de los promedios de flete y puede
+reducir los costos estimados, ya que el cero puede significar tanto
+ausencia de costo como falta de reporte.
+
+\emph{Instalaciones Fijas} cuenta con solo dos registros, por lo que
+cualquier comparación con ese grupo es poco concluyente. Además, la
+prueba de Kruskal-Wallis se aplicó sobre grupos de tamaño muy
+desigual, lo que reduce la precisión de las comparaciones entre modos.
+
+Finalmente, la variable \emph{Valor FOB (USD)} no sigue una
+distribución normal incluso después del tratamiento de outliers, por
+lo que las pruebas no paramétricas son apropiadas, pero las
+conclusiones deben limitarse a asociación y no a causalidad.
+
+\newpage
+
+% ============================================================
+% 7. Conclusiones
+% ============================================================
+\section{Conclusiones}
+
+El análisis permitió identificar una relación positiva y fuerte entre
+el peso neto y el valor FOB: el coeficiente de Spearman
+(\(\rho = 0.7597\), \(p < 0.001\)) fue estadísticamente significativo,
+lo que indica que, en los datos, las mercancías de mayor peso tienden a
+registrar mayor valor, aunque con una dispersión considerable.
+
+La prueba de Kruskal-Wallis encontró diferencias significativas en el
+\emph{Valor FOB (USD)} según el modo de transporte
+(\(H = 87.3240\), \(gl = 3\), \(p < 0.001\)). Entre los grupos con
+tamaño suficiente, el modo marítimo presentó la mediana más alta,
+seguido del terrestre y del aéreo. En cuanto a los fletes, el costo por
+kilogramo del modo aéreo (0.61 USD/kg) fue cerca de nueve veces el del
+marítimo y el terrestre (0.07 USD/kg), y el flete promedio aumentó con
+el rango de peso, aunque en menor proporción que el peso transportado.
+
+Estos hallazgos deben leerse con cautela: la variable \emph{Valor FOB
+(USD)} no sigue una distribución normal, se retiraron valores atípicos
+que representan el 26.27\,\% de la muestra, la proporción de registros
+con flete cero es alta y el grupo \emph{Instalaciones Fijas} tiene solo
+dos observaciones. Por ello, los resultados describen la muestra
+analizada y no necesariamente a todos los exportadores, en especial a
+los de mayor escala.
+
+Como trabajo futuro, se recomienda evaluar modelos de regresión
+logarítmica para formalizar la relación entre peso y valor, ampliar la
+muestra o usar la población completa para reducir la pérdida de
+información, revisar el significado de los registros con flete cero y
+aplicar pruebas post hoc para identificar qué pares de modos difieren.
+Esto permitirá mejorar la estimación de los costos de transporte y la
+interpretación de los resultados.
 
 \newpage
 
@@ -441,6 +796,18 @@ An analysis of variance test for normality (complete samples).
 \emph{Biometrika}, \emph{52}(3/4), 591--611.
 \url{https://doi.org/10.2307/2333709}
 
+\bibitem{kruskalwallis1952}
+Kruskal, W. H., \& Wallis, W. A. (1952).
+Use of ranks in one-criterion variance analysis.
+\emph{Journal of the American Statistical Association}, \emph{47}(260), 583--621.
+\url{https://doi.org/10.1080/01621459.1952.10483441}
+
+\bibitem{spearman1904}
+Spearman, C. (1904).
+The proof and measurement of association between two things.
+\emph{American Journal of Psychology}, \emph{15}(1), 72--101.
+\url{https://doi.org/10.2307/1412159}
+
 \end{thebibliography}
 
 \newpage
@@ -451,6 +818,6 @@ An analysis of variance test for normality (complete samples).
 \appendix
 \section{Apéndice: Código fuente}
 
-\lstinputlisting[language=Python]{../eda_exportaciones.py}
+\lstinputlisting[language=Python]{../src/analisis_exportaciones.py}
 
 \end{document}

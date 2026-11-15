@@ -13,6 +13,9 @@ venv/
 *.fls
 *.fdb_latexmk
 
+# Documentos de referencia del curso (no forman parte del entregable)
+PROYECTO_ANALITICA_DESCRIPTIVA.pdf
+
 # VS Code
 .vscode/
 

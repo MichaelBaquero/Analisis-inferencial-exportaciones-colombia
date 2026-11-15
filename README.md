@@ -1,36 +1,96 @@
 # Proyecto Integrador - Analítica Descriptiva II
 
-Artículo de investigación aplicado sobre datos de Exportaciones de Colombia (DIAN, junio 2026), desarrollado con estadística inferencial: distribuciones de probabilidad, pruebas de hipótesis, bondad de ajuste y regresión lineal simple.
+Artículo de investigación aplicado sobre datos de exportaciones de Colombia (DIAN, junio 2026), desarrollado con estadística descriptiva e inferencial: análisis exploratorio, verificación de normalidad, pruebas de hipótesis no paramétricas y análisis complementario de costos de flete.
 
 ## Equipo
+
 - Angie Montero
 - Michael Baquero
 
 ## Objetivo del proyecto
 
-Analizar el comportamiento de las exportaciones colombianas reportadas por la DIAN para identificar qué factores explican el valor exportado (Valor FOB), aplicando las técnicas del curso de Analítica Descriptiva II sobre un conjunto de datos real.
+Analizar el comportamiento de las exportaciones colombianas reportadas por la DIAN para identificar qué factores se asocian con el valor exportado (Valor FOB), aplicando las técnicas del curso de Analítica Descriptiva II sobre un conjunto de datos real.
 
-## Fase actual
+## Estado del proyecto
 
-**Avance 1 (EDA)** — en desarrollo.
+**Avances 1 y 2 entregados.** El artículo cubre desde la introducción hasta las conclusiones, con el análisis exploratorio y las pruebas inferenciales.
 
-Completado hasta el momento:
-- Carga y descripción del dataset original.
+Contenido desarrollado:
+
+- Carga, descripción y depuración del dataset original (103.179 registros, 72 columnas).
 - Selección y justificación de variables (cuantitativas y categóricas).
-- Muestreo aleatorio (n=1500) y tratamiento de outliers mediante el método IQR.
-- Verificación de normalidad (Shapiro-Wilk + gráfico Q-Q).
+- Muestreo aleatorio (n = 1.500, `random_state = 42`) y tratamiento de outliers por el método IQR sobre tres variables, que deja una muestra depurada de 1.106 registros.
+- Estadística descriptiva comparada antes y después del tratamiento de outliers.
+- Verificación de normalidad con Shapiro-Wilk (W = 0.6277, p < 0.001) y gráficos Q-Q.
+- **Prueba 1:** Kruskal-Wallis del Valor FOB según modo de transporte (H = 87.3240, gl = 3, p < 0.001).
+- **Prueba 2:** correlación de Spearman entre Peso Neto y Valor FOB (rho = 0.7597, p < 0.001).
+- Análisis complementario de fletes: costo por kilogramo según modo de transporte y flete promedio por rango de peso bruto.
+- Discusión, limitaciones y conclusiones.
 
-Pendiente para cerrar el Avance 1:
-- Introducción.
-- Estadística descriptiva y visualizaciones.
+Pendiente (Avance 3 / Proyecto Final): prueba de bondad de ajuste chi-cuadrado, regresión lineal simple con diagnósticos y ampliación de la discusión.
 
 ## Estructura del repositorio
-- `Data/` — dataset de trabajo (Exportaciones DIAN, junio 2026). No se versiona en git, ver `.gitignore`.
-- `Doc/` — documento del artículo en LaTeX (`Articulo.tex`) y sus tablas/gráficos exportados (`Doc/anexos/`).
-- `eda_exportaciones.py` — script de carga, filtrado, muestreo y análisis exploratorio del dataset.
-- `requirements.txt` — dependencias de Python del proyecto.
+
+```
+.
+├── Data/
+│   └── Original/
+│       └── 06_Exportaciones_2026_Junio.xlsx   # Dataset completo de la DIAN
+├── Doc/
+│   ├── Articulo.tex                            # Fuente del artículo en LaTeX
+│   ├── Articulo.pdf                            # Artículo compilado
+│   └── anexos/                                 # Tablas y gráficos del artículo
+├── src/
+│   └── analisis_exportaciones.py                    # Script de análisis
+├── README.md
+└── requirements.txt
+```
+
+- `Data/Original/`: dataset sin transformar, tal como se descargó de la DIAN. Se versiona porque el proyecto debe poder reproducirse desde el insumo original.
+- `Doc/anexos/`: 19 imágenes generadas por el script más el logo del documento. Todas las que usa el artículo están referenciadas en `Articulo.tex`.
+- `src/`: código del análisis. El script resuelve las rutas a partir de su propia ubicación, así que puede ejecutarse desde cualquier directorio.
+
+## Requisitos
+
+Python 3.13 o superior. Las dependencias están en `requirements.txt`:
+
+```bash
+pip install -r requirements.txt
+```
+
+Nota: `dataframe_image` (usada para exportar las tablas como imagen) requiere Google Chrome o Chromium instalado en el sistema. Si no está disponible, el script se detiene en la primera exportación de tabla.
+
+## Cómo ejecutar
+
+Desde la raíz del repositorio o desde cualquier otra carpeta:
+
+```bash
+python src/analisis_exportaciones.py
+```
+
+El script imprime en consola todos los resultados del análisis (dimensiones, estadísticos descriptivos, pruebas de hipótesis y costos de flete) y **sobrescribe** las imágenes de `Doc/anexos/`, por lo que conviene revisar los cambios antes de confirmarlos en git.
+
+Tiempo aproximado de ejecución: 1 a 2 minutos, dominado por la lectura del archivo de Excel de 36 MB.
+
+## Salidas generadas
+
+El script produce en `Doc/anexos/`:
+
+- Tablas: resumen del dataset, categorías por variable, variables seleccionadas, detección de outliers, dimensiones de la muestra, primeras filas, estadísticos descriptivos, conteo por modo de transporte, Kruskal-Wallis y Spearman.
+- Gráficos: histogramas comparativos de Valor FOB y de Peso Neto (con y sin outliers en una misma figura), gráfico Q-Q comparativo, dispersión de Peso Neto vs. Valor FOB, boxplot de Valor FOB por modo de transporte, dispersión de fletes vs. peso bruto, costo por kilogramo según modo y flete promedio por rango de peso.
+
+## Reproducibilidad
+
+- El muestreo usa `random_state = 42`, de modo que la muestra de 1.500 registros y la depuración a 1.106 son idénticas en cada ejecución.
+- El script parte siempre del dataset original: no depende de archivos intermedios ni de muestras previamente guardadas.
+- El artículo se compila desde `Doc/`, por lo que las rutas de las imágenes son relativas a esa carpeta (`anexos/...`).
+
+## Notas sobre LaTeX
+
+El apéndice del artículo incluye el código completo mediante `\lstinputlisting{../src/analisis_exportaciones.py}`, una ruta relativa al repositorio. Esto funciona al compilar en local con el proyecto completo, pero **no en Overleaf**, donde hay que subir el script y ajustar la ruta o reemplazar el listado por el código pegado.
 
 ## Fuente de datos
-- DIAN — Estadísticas de Comercio Exterior: https://www.dian.gov.co/dian/cifras/Paginas/EstadisticasComEx.aspx
-- Archivo: Exportaciones, junio 2026
+
+- DIAN — Estadísticas de Comercio Exterior: <https://www.dian.gov.co/dian/cifras/Paginas/EstadisticasComEx.aspx>
+- Archivo: exportaciones, junio 2026
 - Fecha de descarga: 12/08/2026
