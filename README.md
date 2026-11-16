@@ -39,7 +39,7 @@ Pendiente (Avance 3 / Proyecto Final): prueba de bondad de ajuste chi-cuadrado, 
 ├── Doc/
 │   ├── Articulo.tex                            # Fuente del artículo en LaTeX
 │   ├── Articulo.pdf                            # Artículo compilado
-│   └── anexos/                                 # Tablas y gráficos del artículo
+│   └── anexos/                                 # Gráficos del artículo
 ├── src/
 │   └── analisis_exportaciones.py                    # Script de análisis
 ├── README.md
@@ -47,7 +47,7 @@ Pendiente (Avance 3 / Proyecto Final): prueba de bondad de ajuste chi-cuadrado, 
 ```
 
 - `Data/Original/`: dataset sin transformar, tal como se descargó de la DIAN. Se versiona porque el proyecto debe poder reproducirse desde el insumo original.
-- `Doc/anexos/`: 19 imágenes generadas por el script más el logo del documento. Todas las que usa el artículo están referenciadas en `Articulo.tex`.
+- `Doc/anexos/`: 8 gráficos generados por el script más el logo del documento. Las tablas del artículo se escriben directamente en LaTeX, no como imagen.
 - `src/`: código del análisis. El script resuelve las rutas a partir de su propia ubicación, así que puede ejecutarse desde cualquier directorio.
 
 ## Requisitos
@@ -58,8 +58,6 @@ Python 3.13 o superior. Las dependencias están en `requirements.txt`:
 pip install -r requirements.txt
 ```
 
-Nota: `dataframe_image` (usada para exportar las tablas como imagen) requiere Google Chrome o Chromium instalado en el sistema. Si no está disponible, el script se detiene en la primera exportación de tabla.
-
 ## Cómo ejecutar
 
 Desde la raíz del repositorio o desde cualquier otra carpeta:
@@ -68,15 +66,15 @@ Desde la raíz del repositorio o desde cualquier otra carpeta:
 python src/analisis_exportaciones.py
 ```
 
-El script imprime en consola todos los resultados del análisis (dimensiones, estadísticos descriptivos, pruebas de hipótesis y costos de flete) y **sobrescribe** las imágenes de `Doc/anexos/`, por lo que conviene revisar los cambios antes de confirmarlos en git.
+El script imprime en consola todos los resultados del análisis (dimensiones, tablas, estadísticos descriptivos, pruebas de hipótesis y costos de flete) y **sobrescribe** los gráficos de `Doc/anexos/`, por lo que conviene revisar los cambios antes de confirmarlos en git.
 
 Tiempo aproximado de ejecución: 1 a 2 minutos, dominado por la lectura del archivo de Excel de 36 MB.
 
 ## Salidas generadas
 
-El script produce en `Doc/anexos/`:
+El script imprime las tablas y produce en `Doc/anexos/` los gráficos:
 
-- Tablas: resumen del dataset, categorías por variable, variables seleccionadas, detección de outliers, dimensiones de la muestra, primeras filas, estadísticos descriptivos, conteo por modo de transporte, Kruskal-Wallis y Spearman.
+- Tablas (por consola): resumen del dataset, categorías por variable, variables seleccionadas, detección de outliers, dimensiones de la muestra, primeras filas, estadísticos descriptivos, conteo por modo de transporte, Kruskal-Wallis y Spearman. En el artículo están escritas en LaTeX.
 - Gráficos: histogramas comparativos de Valor FOB y de Peso Neto (con y sin outliers en una misma figura), gráfico Q-Q comparativo, dispersión de Peso Neto vs. Valor FOB, boxplot de Valor FOB por modo de transporte, dispersión de fletes vs. peso bruto, costo por kilogramo según modo y flete promedio por rango de peso.
 
 ## Reproducibilidad

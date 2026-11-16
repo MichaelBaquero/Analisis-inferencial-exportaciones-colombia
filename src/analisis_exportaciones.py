@@ -12,11 +12,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import dataframe_image as dfi
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import shapiro, probplot, skew, kruskal, spearmanr
-
 
 # ------------------------------------------------------------
 # Rutas del proyecto
@@ -29,11 +27,9 @@ RUTA_DATOS = BASE_DIR / "Data" / "Original" / "06_Exportaciones_2026_Junio.xlsx"
 DIR_ANEXOS = BASE_DIR / "Doc" / "anexos"
 DIR_ANEXOS.mkdir(parents=True, exist_ok=True)
 
-
 def ruta_anexo(nombre):
     """Devuelve la ruta completa de un anexo dentro de Doc/anexos/."""
     return str(DIR_ANEXOS / nombre)
-
 
 def exportar_imagen(path):
     """
@@ -44,6 +40,13 @@ def exportar_imagen(path):
     if os.path.exists(path):
         os.remove(path)
 
+def formatear_p(p):
+    """
+    Devuelve el valor p con la precisión adecuada: tres decimales cuando
+    es mayor o igual a 0.001 y notación científica (por ejemplo, 8.23e-19)
+    cuando es menor, para reportar el valor exacto en lugar de un umbral.
+    """
+    return f"{p:.2e}" if p < 1e-3 else f"{p:.3f}"
 
 # ------------------------------------------------------------
 # Descripción del dataset
@@ -57,7 +60,7 @@ print('Visualización de primeras filas:\n', df.head(5))
 print('\nVisualización de las dimensiones: ', df.shape)
 print(df.info())
 
-# Exportación: resumen del dataset ORIGINAL
+# Tabla: resumen del dataset ORIGINAL
 resumen_original = pd.DataFrame({
     "Dataset": ["Original"],
     "Filas": [df.shape[0]],
@@ -65,9 +68,8 @@ resumen_original = pd.DataFrame({
     "Columnas numéricas": [df.select_dtypes(include="number").shape[1]],
     "Columnas categóricas/texto": [df.select_dtypes(include="object").shape[1]]
 })
-exportar_imagen(ruta_anexo("tabla_resumen_original.png"))
-dfi.export(resumen_original.style.hide(axis='index'),
-           ruta_anexo("tabla_resumen_original.png"))
+print("\n--- Tabla: resumen del dataset original ---")
+print(resumen_original.to_string(index=False))
 
 # Exploración preliminar de variables categóricas candidatas
 categoricas_candidatas = [
@@ -80,14 +82,13 @@ categoricas_candidatas = [
 for col in categoricas_candidatas:
     print(col, "->", df[col].nunique(), "categorías únicas")
 
-# Exportación: número de categorías únicas por variable categórica candidata
+# Tabla: número de categorías únicas por variable categórica candidata
 resumen_categoricas = pd.DataFrame({
     "Variable": categoricas_candidatas,
     "Categorías únicas": [df[col].nunique() for col in categoricas_candidatas]
 })
-exportar_imagen(ruta_anexo("tabla_categoricas.png"))
-dfi.export(resumen_categoricas.style.hide(axis='index'),
-           ruta_anexo("tabla_categoricas.png"))
+print("\n--- Tabla: categorías únicas por variable candidata ---")
+print(resumen_categoricas.to_string(index=False))
 
 # Filtro de columnas relevantes (se excluye PAIS_DESTINO_FINAL)
 columnas_relevantes = [
@@ -136,15 +137,16 @@ descripciones = {
     "TIPO_DE_EMBARQUE": "Tipo de embarque (único, consolidado, etc.)."
 }
 
-# Exportación: tabla de variables seleccionadas
+# Tabla: variables seleccionadas. El tipo se reporta como "Numérica" o
+# "Categórica", que es la distinción que usa el artículo.
 tabla_variables = pd.DataFrame({
     "Variable": [renombres[col] for col in columnas_relevantes],
-    "Tipo": [str(df_filtrado[col].dtype) for col in df_filtrado.columns],
+    "Tipo": ["Numérica" if pd.api.types.is_numeric_dtype(df_filtrado[col])
+             else "Categórica" for col in df_filtrado.columns],
     "Descripción": [descripciones[col] for col in columnas_relevantes]
 })
-exportar_imagen(ruta_anexo("tabla_variables_seleccionadas.png"))
-dfi.export(tabla_variables.style.hide(axis='index'),
-           ruta_anexo("tabla_variables_seleccionadas.png"))
+print("\n--- Tabla: variables seleccionadas ---")
+print(tabla_variables.to_string(index=False))
 
 # Validación de valores nulos
 print('\nVisualización de valores nulos:\n', df_filtrado.isnull().sum())
@@ -207,10 +209,6 @@ tabla_outliers = pd.concat([
     }])
 ], ignore_index=True)
 
-exportar_imagen(ruta_anexo("tabla_outliers_muestra.png"))
-dfi.export(tabla_outliers.style.hide(axis='index'),
-           ruta_anexo("tabla_outliers_muestra.png"))
-
 print("\n--- Resumen de outliers (sobre la muestra) ---")
 print(tabla_outliers.to_string(index=False))
 
@@ -218,24 +216,19 @@ print(tabla_outliers.to_string(index=False))
 df_muestra_clean = df_muestra[~outliers_mask].copy()
 print(f"\nFilas después de excluir outliers: {len(df_muestra_clean)}")
 
-# Exportación: comparación de dimensiones muestra inicial vs. sin outliers
+# Tabla: comparación de dimensiones muestra inicial vs. sin outliers
 resumen_muestra = pd.DataFrame({
     "Dataset": ["Muestra inicial (seed 42)", "Muestra sin outliers"],
     "Filas": [df_muestra.shape[0], df_muestra_clean.shape[0]],
     "Columnas": [df_muestra.shape[1], df_muestra_clean.shape[1]]
 })
-exportar_imagen(ruta_anexo("tabla_dimensiones_muestra.png"))
-dfi.export(resumen_muestra.style.hide(axis='index'),
-           ruta_anexo("tabla_dimensiones_muestra.png"))
+print("\n--- Tabla: dimensiones de la muestra ---")
+print(resumen_muestra.to_string(index=False))
 
-# Exportación: primeras filas de la muestra limpia, redondeada a 2
-# decimales. Se oculta el índice para mantener el mismo estilo visual
-# que las demás tablas exportadas.
+# Tabla: primeras filas de la muestra limpia, redondeada a 2 decimales.
 muestra_head = df_muestra_clean.head(5).round(2)
-exportar_imagen(ruta_anexo("tabla_muestra_head.png"))
-dfi.export(muestra_head.style.hide(axis='index'),
-           ruta_anexo("tabla_muestra_head.png"))
-
+print("\n--- Tabla: primeras filas de la muestra limpia ---")
+print(muestra_head.to_string(index=False))
 
 # ------------------------------------------------------------
 # Análisis exploratorio: estadística descriptiva
@@ -260,21 +253,12 @@ estadisticos_con_outliers = estadisticos_con_outliers.round(2)
 print("\nEstadística descriptiva - muestra con outliers:\n",
       estadisticos_con_outliers)
 
-exportar_imagen(ruta_anexo("tabla_estadisticos_con_outliers.png"))
-dfi.export(estadisticos_con_outliers,
-           ruta_anexo("tabla_estadisticos_con_outliers.png"))
-
 estadisticos_sin_outliers = df_muestra_clean[columnas_numericas].describe().T
 estadisticos_sin_outliers["Asimetría"] = df_muestra_clean[columnas_numericas].apply(
     skew)
 estadisticos_sin_outliers = estadisticos_sin_outliers.round(2)
 print("\nEstadística descriptiva - muestra sin outliers:\n",
       estadisticos_sin_outliers)
-
-exportar_imagen(ruta_anexo("tabla_estadisticos_sin_outliers.png"))
-dfi.export(estadisticos_sin_outliers,
-           ruta_anexo("tabla_estadisticos_sin_outliers.png"))
-
 
 # ------------------------------------------------------------
 # Análisis exploratorio: visualizaciones
@@ -321,7 +305,6 @@ exportar_imagen(ruta_anexo("histograma_peso_neto.png"))
 plt.savefig(ruta_anexo("histograma_peso_neto.png"), dpi=300)
 plt.close()
 
-
 # ------------------------------------------------------------
 # Análisis exploratorio: verificación de normalidad
 # ------------------------------------------------------------
@@ -334,14 +317,10 @@ print(f"\nRegistros válidos para la prueba: {len(variable)}")
 
 estadistico_w, p_valor = shapiro(variable)
 
-# Se reporta el valor p redondeado en formato decimal, no en notación
-# científica. Cuando el valor es extremadamente pequeño (menor a 0.001),
-# se reporta como "< 0.001" en vez de un número con muchos ceros,
-# siguiendo la convención estándar de reporte de pruebas de hipótesis.
-if p_valor < 0.001:
-    p_valor_str = "< 0.001"
-else:
-    p_valor_str = f"{p_valor:.3f}"
+# El valor p se reporta de forma exacta: con tres decimales cuando es
+# mayor o igual a 0.001 y en notación científica cuando es menor, de
+# modo que el artículo y la salida del script coincidan.
+p_valor_str = formatear_p(p_valor)
 
 print(f"\nEstadístico W: {estadistico_w:.4f}")
 print(f"Valor p: {p_valor_str}")
@@ -385,10 +364,6 @@ conteo_modo_transporte.columns = ['Modo Transporte', 'Frecuencia']
 print("\nConteo por Modo de Transporte (muestra sin outliers):\n",
       conteo_modo_transporte)
 
-exportar_imagen(ruta_anexo("tabla_conteo_modo_transporte.png"))
-dfi.export(conteo_modo_transporte.style.hide(axis='index'),
-           ruta_anexo("tabla_conteo_modo_transporte.png"))
-
 # Prueba de Kruskal-Wallis: compara si las distribuciones de Valor FOB
 # son iguales entre los grupos de Modo de Transporte, sin asumir normalidad
 grupos_transporte = [
@@ -398,10 +373,7 @@ grupos_transporte = [
 
 estadistico_h, p_valor_kw = kruskal(*grupos_transporte)
 
-if p_valor_kw < 0.001:
-    p_valor_kw_str = "< 0.001"
-else:
-    p_valor_kw_str = f"{p_valor_kw:.3f}"
+p_valor_kw_str = formatear_p(p_valor_kw)
 
 alfa = 0.05
 if p_valor_kw > alfa:
@@ -436,10 +408,8 @@ tabla_kruskal = pd.DataFrame({
         conclusion_kw
     ]
 })
-
-exportar_imagen(ruta_anexo("tabla_kruskal_valor_fob.png"))
-dfi.export(tabla_kruskal.style.hide(axis='index'),
-           ruta_anexo("tabla_kruskal_valor_fob.png"))
+print("\n--- Tabla: resultados de Kruskal-Wallis ---")
+print(tabla_kruskal.to_string(index=False))
 
 # Visualización: boxplot de Valor FOB (USD) por Modo de Transporte.
 plt.figure(figsize=(9, 6))
@@ -460,10 +430,7 @@ rho, p_valor_spearman = spearmanr(
     df_muestra_clean['Valor FOB (USD)']
 )
 
-if p_valor_spearman < 0.001:
-    p_valor_spearman_str = "< 0.001"
-else:
-    p_valor_spearman_str = f"{p_valor_spearman:.3f}"
+p_valor_spearman_str = formatear_p(p_valor_spearman)
 
 alfa = 0.05
 if p_valor_spearman > alfa:
@@ -511,10 +478,8 @@ tabla_spearman = pd.DataFrame({
         conclusion_spearman
     ]
 })
-
-exportar_imagen(ruta_anexo("tabla_spearman_peso_valor.png"))
-dfi.export(tabla_spearman.style.hide(axis='index'),
-           ruta_anexo("tabla_spearman_peso_valor.png"))
+print("\n--- Tabla: resultados de la correlación de Spearman ---")
+print(tabla_spearman.to_string(index=False))
 
 # Visualización: diagrama de dispersión entre Peso Neto y Valor FOB,
 # como evidencia visual que complementa el coeficiente numérico.
@@ -597,7 +562,6 @@ registro_max = df_muestra_clean.loc[flete.idxmax()]
 print("\nRegistro con el flete más alto:")
 print(registro_max[['Fletes (USD)', 'Peso Neto (Kg)',
                     'Peso Bruto (Kg)', 'Modo Transporte']].to_string())
-
 
 # ------------------------------------------------------------
 # Visualizaciones de los costos de flete (secciones 5.3-5.5)

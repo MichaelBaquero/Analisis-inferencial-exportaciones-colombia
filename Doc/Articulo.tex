@@ -5,6 +5,7 @@
 \usepackage[spanish]{babel}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{amsmath}
 \usepackage{listings}
 \usepackage{xcolor}
@@ -13,6 +14,14 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{bookmark}
 \usepackage{placeins}  % para \FloatBarrier
+
+% Se permite que las páginas alberguen más contenido flotante (tablas y
+% figuras), de modo que no queden huecos grandes cuando un cuadro no
+% cabe en el espacio restante.
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.7}
+\renewcommand{\textfraction}{0.10}
+\renewcommand{\floatpagefraction}{0.75}
 
 % ============================================================
 % Configuración de bloques de código (para el Apéndice)
@@ -142,7 +151,8 @@ donde \(x_{(i)}\) son los valores ordenados de la muestra y \(a_i\)
 son coeficientes derivados de los momentos esperados de una
 distribución normal. Valores de \(W\) cercanos a 1 indican mayor
 compatibilidad con la normalidad. En este proyecto, la prueba aplicada
-sobre \emph{Valor FOB (USD)} arrojó \(W = 0.6277\) (\(p < 0.001\)),
+sobre \emph{Valor FOB (USD)} arrojó \(W = 0.6277\)
+(\(p = 1.24 \times 10^{-43}\)),
 rechazando el supuesto de normalidad. Esto condiciona la elección de
 las pruebas inferenciales posteriores, que deben ser de tipo
 \textbf{no paramétrico}.
@@ -244,9 +254,15 @@ Dentro de este conjunto de datos, se identificaron 44 columnas de tipo numérico
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=0.7\textwidth]{anexos/tabla_resumen_original.png}
     \caption{Resumen del dataset original de exportaciones (junio 2026).}
     \label{tab:resumen_original}
+    \begin{tabular}{lrrrr}
+        \toprule
+        Dataset & Filas & Columnas & Numéricas & Categóricas o texto \\
+        \midrule
+        Original & 103\,179 & 72 & 44 & 28 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
@@ -261,9 +277,19 @@ un número excesivo de categorías dificulta el análisis estadístico
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=0.5\textwidth]{anexos/tabla_categoricas.png}
     \caption{Número de categorías únicas por variable categórica candidata.}
     \label{tab:categoricas}
+    \begin{tabular}{lr}
+        \toprule
+        Variable & Categorías únicas \\
+        \midrule
+        \texttt{MODO\_TRANSPORTE} & 4 \\
+        \texttt{MODALIDAD\_EXPORTACION} & 10 \\
+        \texttt{PAIS\_DESTINO\_FINAL} & 173 \\
+        \texttt{REGION\_DE\_ORIGEN} & 31 \\
+        \texttt{TIPO\_DE\_EMBARQUE} & 3 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
@@ -279,13 +305,30 @@ Tras la exclusión de \texttt{PAIS\_DESTINO\_FINAL}, se seleccionaron
 investigación y el modelo de regresión final. Esta selección incluye
 tanto variables cuantitativas (como valores monetarios y pesos) como
 variables categóricas de baja cardinalidad. La descripción técnica de
-cada variable seleccionada se presenta en la Tabla~\ref{tab:variables_seleccionadas}.
+cada variable seleccionada se presenta en la Tabla~\ref{tab:variables}.
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=0.9\textwidth]{anexos/tabla_variables_seleccionadas.png}
     \caption{Variables seleccionadas del dataset de exportaciones.}
-    \label{tab:variables_seleccionadas}
+    \label{tab:variables}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{1.9cm}>{\raggedright\arraybackslash}p{8.9cm}}
+        \toprule
+        Variable & Tipo & Descripción \\
+        \midrule
+        Valor FOB (USD) & Numérica & Valor de la mercancía en dólares (FOB: Free On Board, sin fletes ni seguros) \\
+        Peso Neto (Kg) & Numérica & Peso neto de la mercancía en kilogramos (sin incluir embalaje) \\
+        Peso Bruto (Kg) & Numérica & Peso bruto de la mercancía en kilogramos (incluyendo embalaje) \\
+        Vlr. Serie Nal (USD) & Numérica & Valor total de la serie agregada nacional en dólares \\
+        Fletes (USD) & Numérica & Valor de los fletes internacionales en dólares \\
+        Seguros (USD) & Numérica & Valor de los seguros internacionales en dólares \\
+        Cant. Unidades & Numérica & Cantidad de unidades físicas de la mercancía \\
+        Modo Transporte & Categórica & Modo de transporte utilizado (marítimo, aéreo, terrestre, etc.) \\
+        Modalidad & Categórica & Modalidad de exportación (definitiva, temporal, etc.) \\
+        Región Origen & Categórica & Región de origen de la mercancía en Colombia \\
+        Tipo Embarque & Categórica & Tipo de embarque (único, consolidado, etc.) \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
@@ -309,9 +352,21 @@ como el total combinado.
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=0.9\textwidth]{anexos/tabla_outliers_muestra.png}
-    \caption{Estadísticos de detección de outliers sobre la muestra (n=1500), por variable.}
+    \caption{Estadísticos de detección de outliers sobre la muestra ($n = 1\,500$), por variable.}
     \label{tab:outliers}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{lrrrrrrr}
+        \toprule
+        Variable & Outliers & \% & Lím. inferior & Lím. superior
+        & Q1 & Q3 & IQR \\
+        \midrule
+        Valor FOB (USD) & 223 & 14.87\% & $-$16\,258.31 & 28\,163.49 & 399.86 & 11\,505.31 & 11\,105.45 \\
+        Peso Neto (Kg) & 267 & 17.80\% & $-$2\,968.16 & 5\,018.47 & 26.82 & 2\,023.48 & 1\,996.66 \\
+        Cant. Unidades & 269 & 17.93\% & $-$6\,177.74 & 10\,413.56 & 44.00 & 4\,191.83 & 4\,147.83 \\
+        TOTAL (unión) & 394 & 26.27\% & - & - & - & - & - \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
@@ -319,14 +374,21 @@ En total se detectaron \textbf{394 registros atípicos} (26.27\,\% de la
 muestra). Estos registros se excluyeron para obtener una muestra
 depurada de \textbf{1.106} registros, sobre la cual se realizó el
 análisis exploratorio y las pruebas inferenciales. La
-Tabla~\ref{tab:dimensiones_muestra} compara las dimensiones de la
+Tabla~\ref{tab:dimensiones} compara las dimensiones de la
 muestra inicial (con outliers) y la muestra final sin outliers.
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=0.6\textwidth]{anexos/tabla_dimensiones_muestra.png}
-    \caption{Comparación de dimensiones: muestra inicial vs. muestra sin outliers.}
-    \label{tab:dimensiones_muestra}
+    \caption{Comparación de dimensiones: muestra inicial vs.\ muestra sin outliers.}
+    \label{tab:dimensiones}
+    \begin{tabular}{lrr}
+        \toprule
+        Dataset & Filas & Columnas \\
+        \midrule
+        Muestra inicial (seed 42) & 1\,500 & 11 \\
+        Muestra sin outliers & 1\,106 & 11 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
@@ -335,9 +397,21 @@ las primeras cinco filas de la muestra de trabajo ya depurada.
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=0.85\textwidth]{anexos/tabla_muestra_head.png}
-    \caption{Primeras 5 filas de la muestra final (sin outliers).}
+    \caption{Primeras cinco filas de la muestra final (sin outliers).}
     \label{tab:muestra_head}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{rrrrrrrl}
+        \toprule
+        Valor FOB & Peso Neto & Peso Bruto & Vlr.\ Serie Nal & Fletes & Seguros & Cant.\ Unidades & Modo \\
+        \midrule
+        1\,932.88 & 722.54 & 743.93 & 0.00 & 0.00 & 0.00 & 722.54 & Marítimo \\
+        2\,797.25 & 558.00 & 573.93 & 2\,412.38 & 215.88 & 0.00 & 9.00 & Terrestre \\
+        530.91 & 23.26 & 28.75 & 0.00 & 0.00 & 0.00 & 23.26 & Terrestre \\
+        280.00 & 63.55 & 64.65 & 0.00 & 0.00 & 0.00 & 63.55 & Terrestre \\
+        715.59 & 224.71 & 229.30 & 0.00 & 0.00 & 0.00 & 224.71 & Aéreo \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
@@ -349,18 +423,18 @@ directamente del supuesto de normalidad evaluado en la sección de
 Análisis exploratorio.
 
 \begin{table}[htbp]
-\centering
-\begin{tabular}{p{3.2cm}p{4.5cm}p{6.5cm}}
-\toprule
-\textbf{Técnica} & \textbf{Variables} & \textbf{Justificación} \\
-\midrule
-Shapiro-Wilk & Valor FOB (USD) & Verificar supuesto de normalidad antes de elegir pruebas paramétricas o no paramétricas. \\
-Kruskal-Wallis & Valor FOB (USD) vs. Modo Transporte & Comparación de más de 2 grupos independientes; no asume normalidad, a diferencia de ANOVA. \\
-Correlación de Spearman & Peso Neto (Kg) vs. Valor FOB (USD) & Mide relación monótona entre variables cuantitativas sin asumir linealidad ni normalidad. \\
-\bottomrule
-\end{tabular}
-\caption{Técnicas inferenciales aplicadas y su justificación.}
-\label{tab:tecnicas}
+    \centering
+    \caption{Técnicas inferenciales aplicadas y su justificación.}
+    \label{tab:tecnicas}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{6.4cm}}
+        \toprule
+        \textbf{Técnica} & \textbf{Variables} & \textbf{Justificación} \\
+        \midrule
+        Shapiro-Wilk & Valor FOB (USD) & Verificar el supuesto de normalidad antes de elegir pruebas paramétricas o no paramétricas. \\
+        Kruskal-Wallis & Valor FOB (USD) vs. Modo Transporte & Comparación de más de dos grupos independientes; no asume normalidad, a diferencia de ANOVA. \\
+        Correlación de Spearman & Peso Neto (Kg) vs. Valor FOB (USD) & Mide la relación monótona entre variables cuantitativas sin asumir linealidad ni normalidad. \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 
 \subsection*{Herramientas computacionales}
@@ -370,9 +444,9 @@ siguientes librerías: \texttt{pandas} para manipulación de datos,
 \texttt{scipy.stats} para las pruebas estadísticas (\texttt{shapiro},
 \texttt{kruskal}, \texttt{spearmanr}), \texttt{numpy} para el cálculo
 del intervalo de confianza mediante la transformación de Fisher,
-\texttt{matplotlib} y \texttt{seaborn} para las visualizaciones, y
-\texttt{dataframe\_image} para la exportación de tablas como imágenes
-incluidas en este documento.
+\texttt{matplotlib} y \texttt{seaborn} para las visualizaciones. Las
+tablas del artículo se escribieron directamente en LaTeX, de modo que
+los resultados numéricos quedan como texto y no como imagen.
 
 \newpage
 
@@ -401,17 +475,47 @@ muestra sin outliers.
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{anexos/tabla_estadisticos_con_outliers.png}
     \caption{Estadística descriptiva de las variables numéricas -- muestra con outliers.}
     \label{tab:estad_con}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{lrrrrrrr}
+        \toprule
+        Variable & $n$ & Media & Mediana & Desv.\ est. & Mín. & Máx.
+        & Asimetría \\
+        \midrule
+        Valor FOB (USD) & 1\,500 & 52\,720.09 & 2\,023.00 & 916\,701.21 & 0.06 & 34\,800\,615.03 & 36.49 \\
+        Peso Neto (Kg) & 1\,500 & 60\,707.41 & 209.50 & 1\,905\,363.94 & 0.01 & 73\,538\,808.00 & 38.29 \\
+        Peso Bruto (Kg) & 1\,500 & 61\,142.05 & 238.88 & 1\,905\,431.48 & 0.01 & 73\,538\,808.00 & 38.29 \\
+        Vlr. Serie Nal (USD) & 1\,500 & 8\,157.61 & 0.00 & 69\,687.32 & 0.00 & 1\,696\,214.53 & 17.76 \\
+        Fletes (USD) & 1\,500 & 264.57 & 0.00 & 1\,426.91 & 0.00 & 35\,499.84 & 15.29 \\
+        Seguros (USD) & 1\,500 & 17.18 & 0.00 & 376.23 & 0.00 & 14\,249.42 & 36.31 \\
+        Cant. Unidades & 1\,500 & 23\,548.58 & 326.92 & 211\,590.49 & 0.01 & 6\,046\,090.00 & 20.75 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{anexos/tabla_estadisticos_sin_outliers.png}
     \caption{Estadística descriptiva de las variables numéricas -- muestra sin outliers.}
     \label{tab:estad_sin}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{lrrrrrrr}
+        \toprule
+        Variable & $n$ & Media & Mediana & Desv.\ est. & Mín. & Máx.
+        & Asimetría \\
+        \midrule
+        Valor FOB (USD) & 1\,106 & 2\,860.39 & 959.00 & 4\,675.58 & 0.06 & 27\,944.90 & 2.73 \\
+        Peso Neto (Kg) & 1\,106 & 428.85 & 83.00 & 842.60 & 0.01 & 4\,922.68 & 2.95 \\
+        Peso Bruto (Kg) & 1\,106 & 475.57 & 91.31 & 917.26 & 0.01 & 6\,211.00 & 2.93 \\
+        Vlr. Serie Nal (USD) & 1\,106 & 738.97 & 0.00 & 2\,347.68 & 0.00 & 20\,682.63 & 4.78 \\
+        Fletes (USD) & 1\,106 & 68.08 & 0.00 & 300.16 & 0.00 & 4\,178.69 & 7.99 \\
+        Seguros (USD) & 1\,106 & 1.37 & 0.00 & 9.65 & 0.00 & 147.94 & 10.60 \\
+        Cant. Unidades & 1\,106 & 802.81 & 140.50 & 1\,599.73 & 0.01 & 10\,000.00 & 3.19 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
@@ -470,10 +574,11 @@ Shapiro-Wilk sobre la muestra depurada de 1.106 registros:
 
 \begin{itemize}
     \item Estadístico de prueba (\(W\)): \textbf{0.6277}
-    \item Valor \(p\): \textbf{< 0.001}
+    \item Valor \(p\): \textbf{\(1.24 \times 10^{-43}\)}
 \end{itemize}
 
-Dado que \(p < \alpha = 0.05\), se \textbf{rechaza la hipótesis nula}:
+Como \(p = 1.24 \times 10^{-43} < \alpha = 0.05\), se \textbf{rechaza
+la hipótesis nula}:
 \emph{Valor FOB (USD)}, incluso tras el tratamiento de outliers,
 \textbf{no sigue una distribución normal}. La
 Figura~\ref{fig:qqplot_normalidad} respalda este resultado: en el panel
@@ -507,9 +612,18 @@ categoría de \emph{Modo Transporte} en la muestra depurada
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=0.5\textwidth]{anexos/tabla_conteo_modo_transporte.png}
     \caption{Conteo de observaciones por Modo de Transporte (muestra sin outliers).}
     \label{tab:conteo_transporte}
+    \begin{tabular}{lr}
+        \toprule
+        Modo de transporte & Frecuencia \\
+        \midrule
+        Aéreo & 547 \\
+        Marítimo & 414 \\
+        Terrestre (carretero) & 143 \\
+        Instalaciones Fijas & 2 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
@@ -522,25 +636,46 @@ y reduce la precisión de las comparaciones entre modos.
 
 Se aplicó la prueba de Kruskal-Wallis para contrastar si el
 \emph{Valor FOB (USD)} difiere entre los cuatro modos de transporte.
+El contraste se plantea sobre las medianas poblacionales, con un nivel
+de significancia \(\alpha = 0.05\):
+\begin{gather*}
+H_0:\ M_{\text{aéreo}} = M_{\text{marítimo}} =
+M_{\text{terrestre}} = M_{\text{fijas}},\\
+H_1:\ \text{al menos una de las medianas difiere.}
+\end{gather*}
 Los resultados se presentan en la Tabla~\ref{tab:kruskal}.
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=0.95\textwidth]{anexos/tabla_kruskal_valor_fob.png}
     \caption{Resultados de la prueba de Kruskal-Wallis.}
     \label{tab:kruskal}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}p{10.1cm}}
+        \toprule
+        $H_0$ & $M_{\text{aéreo}} = M_{\text{marítimo}} =
+        M_{\text{terrestre}} = M_{\text{fijas}}$ \\
+        $H_1$ & Al menos una mediana de Valor FOB difiere entre modos \\
+        \midrule
+        Estadístico $H$ & 87.3240 \\
+        Grados de libertad & 3 \\
+        Valor $p$ & $8.23 \times 10^{-19}$ \\
+        Nivel de significancia & $\alpha = 0.05$ \\
+        Decisión & Se rechaza $H_0$ \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
 Con un estadístico \(H = 87.3240\) (\(gl = 3\)) y un valor
-\(p < 0.001\), se \textbf{rechaza la hipótesis nula}: existe evidencia
-estadística sólida de que al menos un modo de transporte difiere de
-los demás en términos de Valor FOB. La Figura~\ref{fig:boxplot_transporte}
-ilustra esta diferencia mediante un diagrama de cajas por grupo.
+\(p = 8.23 \times 10^{-19}\), se \textbf{rechaza la hipótesis nula}:
+existe evidencia estadística sólida de que al menos un modo de
+transporte difiere de los demás en términos de Valor FOB. La
+Figura~\ref{fig:boxplot_transporte} ilustra esta diferencia mediante un
+diagrama de cajas por grupo.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.75\textwidth]{anexos/boxplot_fob_por_transporte.png}
+    \includegraphics[width=0.66\textwidth]{anexos/boxplot_fob_por_transporte.png}
     \caption{Valor FOB (USD) por Modo de Transporte.}
     \label{fig:boxplot_transporte}
 \end{figure}
@@ -562,21 +697,40 @@ reducido y no de una menor variabilidad real.
 
 Se calculó la correlación de Spearman entre \emph{Peso Neto (Kg)} y
 \emph{Valor FOB (USD)} sobre la muestra depurada de 1.106 registros.
+El contraste se plantea sobre el coeficiente de correlación
+poblacional, con \(\alpha = 0.05\):
+\[
+H_0:\ \rho = 0
+\qquad\text{frente a}\qquad
+H_1:\ \rho \neq 0.
+\]
 Los resultados se presentan en la Tabla~\ref{tab:spearman}.
 
 \begin{table}[htbp]
     \centering
-    \includegraphics[width=0.95\textwidth]{anexos/tabla_spearman_peso_valor.png}
     \caption{Resultados de la correlación de Spearman entre Peso Neto y Valor FOB.}
     \label{tab:spearman}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}p{10.1cm}}
+        \toprule
+        $H_0$ & $\rho = 0$ \\
+        $H_1$ & $\rho \neq 0$ \\
+        \midrule
+        Coeficiente $\rho$ & 0.7597 \\
+        IC al 95\,\% para $\rho$ & $[0.7336,\ 0.7836]$ \\
+        Valor $p$ & $1.44 \times 10^{-208}$ \\
+        Nivel de significancia & $\alpha = 0.05$ \\
+        Decisión & Se rechaza $H_0$ \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 \FloatBarrier
 
 Se obtuvo un coeficiente \(\rho = 0.7597\), con un intervalo de
 confianza al 95\,\% de \([0.7336,\ 0.7836]\) y un valor
-\(p < 0.001\). Dado que el intervalo no incluye el cero y el valor
-\(p\) es inferior a \(\alpha = 0.05\), se \textbf{rechaza la hipótesis
-nula}: existe una correlación monótona positiva, fuerte y
+\(p = 1.44 \times 10^{-208}\). Dado que el intervalo no incluye el cero
+y el valor \(p\) es inferior a \(\alpha = 0.05\), se \textbf{rechaza la
+hipótesis nula}: existe una correlación monótona positiva, fuerte y
 estadísticamente significativa entre el peso neto de la mercancía y
 su valor FOB. La Figura~\ref{fig:scatter_peso_fob} presenta el
 diagrama de dispersión correspondiente.
@@ -681,8 +835,9 @@ condicionada por los registros con flete igual a cero.
 Los resultados muestran que el peso es un indicador relevante del
 valor de una exportación. La correlación de Spearman entre
 \emph{Peso Neto (Kg)} y \emph{Valor FOB (USD)} fue positiva y fuerte
-(\(\rho = 0.7597\), \(p < 0.001\)): a mayor peso, tiende a registrarse
-un mayor valor FOB. Sin embargo, la dispersión es amplia, sobre todo
+(\(\rho = 0.7597\), \(p = 1.44 \times 10^{-208}\)): a mayor peso,
+tiende a registrarse un mayor valor FOB. Sin embargo, la dispersión es
+amplia, sobre todo
 en pesos bajos, donde coexisten mercancías livianas de alto valor
 unitario (por ejemplo, productos electrónicos o flores) con mercancías
 de bajo valor y peso similar. Por eso el peso explica una parte
@@ -692,7 +847,8 @@ El modo de transporte también se asocia con el valor FOB. En la
 muestra depurada, entre los grupos con mayor número de observaciones,
 el transporte marítimo presenta la mediana más alta, seguido del
 terrestre y del aéreo; la prueba de Kruskal-Wallis confirmó que al
-menos un modo difiere (\(H = 87.3240\), \(gl = 3\), \(p < 0.001\)).
+menos un modo difiere (\(H = 87.3240\), \(gl = 3\),
+\(p = 8.23 \times 10^{-19}\)).
 Este resultado indica que el modo importa, pero no identifica por sí
 mismo qué pares de modos difieren ni controla por tipo de mercancía.
 
@@ -737,14 +893,16 @@ conclusiones deben limitarse a asociación y no a causalidad.
 
 El análisis permitió identificar una relación positiva y fuerte entre
 el peso neto y el valor FOB: el coeficiente de Spearman
-(\(\rho = 0.7597\), \(p < 0.001\)) fue estadísticamente significativo,
-lo que indica que, en los datos, las mercancías de mayor peso tienden a
-registrar mayor valor, aunque con una dispersión considerable.
+(\(\rho = 0.7597\), \(p = 1.44 \times 10^{-208}\)) fue
+estadísticamente significativo, lo que indica que, en los datos, las
+mercancías de mayor peso tienden a registrar mayor valor, aunque con
+una dispersión considerable.
 
 La prueba de Kruskal-Wallis encontró diferencias significativas en el
 \emph{Valor FOB (USD)} según el modo de transporte
-(\(H = 87.3240\), \(gl = 3\), \(p < 0.001\)). Entre los grupos con
-tamaño suficiente, el modo marítimo presentó la mediana más alta,
+(\(H = 87.3240\), \(gl = 3\), \(p = 8.23 \times 10^{-19}\)). Entre los
+grupos con tamaño suficiente, el modo marítimo presentó la mediana más
+alta,
 seguido del terrestre y del aéreo. En cuanto a los fletes, el costo por
 kilogramo del modo aéreo (0.61 USD/kg) fue cerca de nueve veces el del
 marítimo y el terrestre (0.07 USD/kg), y el flete promedio aumentó con
