@@ -2,7 +2,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[spanish]{babel}
+\usepackage[spanish,es-nodecimaldot]{babel}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{booktabs}
 \usepackage{array}
@@ -15,8 +15,12 @@
 \usepackage{bookmark}
 \usepackage{placeins}  % para \FloatBarrier
 
+% Unifica el nombre de los flotantes con el término usado en el texto y en
+% la guía del curso ("Tabla" en lugar de "Cuadro").
+\addto\captionsspanish{\renewcommand{\tablename}{Tabla}}
+
 % Se permite que las páginas alberguen más contenido flotante (tablas y
-% figuras), de modo que no queden huecos grandes cuando un cuadro no
+% figuras), de modo que no queden huecos grandes cuando una tabla no
 % cabe en el espacio restante.
 \renewcommand{\topfraction}{0.85}
 \renewcommand{\bottomfraction}{0.7}
@@ -57,14 +61,46 @@
     {\LARGE \textbf{Análisis Exploratorio e Inferencial de Exportaciones Colombianas}}\\[0.3cm]
     {\Large (Junio 2026)}\\[2cm]
 
-    {\large Angie Montero \\ Michael Baquero}\\[1.5cm]
+    {\large Angie Paola Montero Tique \\ Michael Yesid Baquero Gomez}\\[1.5cm]
 
     {\large Analítica Descriptiva II}\\[0.2cm]
     {\large Unicafam}\\[0.2cm]
-    {\large Octubre 2026}
+    {\large Noviembre 2026}
 
     \vfill
 \end{titlepage}
+
+\newpage
+
+% ============================================================
+% Resumen
+% ============================================================
+\section*{Resumen}
+
+Este artículo analiza la relación entre el peso de las mercancías
+exportadas, su valor FOB --es decir, el valor de la mercancía en el
+puerto de embarque, sin flete ni seguro internacionales-- y los costos
+de flete en las exportaciones colombianas de junio de 2026, a partir de
+las estadísticas oficiales de comercio exterior de la DIAN, validadas
+por el DANE. El objetivo es determinar si el peso neto se asocia con el
+valor declarado y si el modo de transporte y los costos logísticos
+introducen diferencias relevantes. Se trabajó con una muestra aleatoria de 1.500
+registros, depurada mediante el rango intercuartílico hasta 1.106
+observaciones. La metodología combinó análisis descriptivo,
+verificación del supuesto de normalidad con Shapiro-Wilk y gráficos
+Q-Q, pruebas no paramétricas de Kruskal-Wallis y correlación de
+Spearman, una prueba chi-cuadrado de bondad de ajuste y un modelo de
+regresión lineal simple con diagnóstico de residuos. Los resultados
+muestran que el valor FOB no sigue una distribución normal, que el peso
+neto se relaciona de forma positiva y fuerte con el valor exportado y
+que el modo de transporte se asocia con diferencias significativas en
+el valor, aunque no en la distribución de los fletes. El peso resulta
+un predictor relevante, pero insuficiente por sí solo, del valor
+exportado.
+
+\vspace{0.6cm}
+\noindent\textbf{Palabras clave:} exportaciones, valor FOB, flete,
+regresión lineal, pruebas no paramétricas.
 
 \newpage
 
@@ -75,16 +111,24 @@
 
 El comercio exterior es uno de los pilares de la actividad económica
 colombiana, y su seguimiento estadístico permite comprender el
-comportamiento de los sectores productivos que participan en él
-\cite{dian2026}. La Dirección de Impuestos y Aduanas Nacionales (DIAN),
-en conjunto con el Departamento Administrativo Nacional de Estadística
-(DANE), produce y certifica mensualmente las estadísticas oficiales de
-exportaciones del país, las cuales constituyen una de las fuentes más
-completas y confiables para el análisis cuantitativo de esta actividad
-\cite{dane2026}. Dentro de estas estadísticas, variables como el valor
+comportamiento de los sectores productivos que participan en él. La
+Dirección de Impuestos y Aduanas Nacionales (DIAN), en conjunto con el
+Departamento Administrativo Nacional de Estadística (DANE), produce y
+certifica mensualmente las estadísticas oficiales de exportaciones del
+país, las cuales constituyen una de las fuentes más completas y
+confiables para el análisis cuantitativo de esta actividad (DANE, 2026;
+DIAN, 2026). Dentro de estas estadísticas, variables como el valor
 FOB, el peso de la mercancía y los costos de flete permiten caracterizar
 no solo cuánto exporta el país, sino también bajo qué condiciones
 logísticas y económicas se realizan dichas operaciones.
+
+En este contexto, el \emph{valor FOB} (\emph{Free On Board}) es el valor
+de la mercancía en el puerto de embarque: incluye los costos internos y
+de carga hasta ese punto, pero excluye el flete y el seguro
+internacionales, y constituye la base con la que la DIAN registra el
+valor de las exportaciones. Por eso, a lo largo de este artículo el
+\emph{Valor FOB (USD)} se interpreta como el valor declarado de la
+mercancía antes de los costos de transporte internacional.
 
 A pesar de la disponibilidad de esta información, no es evidente a
 simple vista cómo se relacionan el peso de las mercancías exportadas
@@ -129,8 +173,6 @@ mediante el método del rango intercuartílico (IQR), aplicado sobre las
 variables Valor FOB (USD), Peso Neto (Kg) y Cant. Unidades, obteniendo
 una muestra final de 1.106 registros para el análisis.
 
-\newpage
-
 % ============================================================
 % 2. Marco teórico
 % ============================================================
@@ -141,7 +183,7 @@ una muestra final de 1.106 registros para el análisis.
 Muchas pruebas estadísticas paramétricas (como la prueba t o el ANOVA)
 asumen que la variable analizada sigue una distribución normal. Para
 verificar este supuesto se utilizó la prueba de \textbf{Shapiro-Wilk}
-\cite{shapirowilk1965}, cuyo estadístico \(W\) se calcula como:
+(Shapiro y Wilk, 1965), cuyo estadístico \(W\) se calcula como:
 
 \[
 W = \frac{\left( \sum_{i=1}^{n} a_i x_{(i)} \right)^2}{\sum_{i=1}^{n} (x_i - \bar{x})^2}
@@ -150,11 +192,13 @@ W = \frac{\left( \sum_{i=1}^{n} a_i x_{(i)} \right)^2}{\sum_{i=1}^{n} (x_i - \ba
 donde \(x_{(i)}\) son los valores ordenados de la muestra y \(a_i\)
 son coeficientes derivados de los momentos esperados de una
 distribución normal. Valores de \(W\) cercanos a 1 indican mayor
-compatibilidad con la normalidad. En este proyecto, la prueba aplicada
-sobre \emph{Valor FOB (USD)} arrojó \(W = 0.6277\)
-(\(p = 1.24 \times 10^{-43}\)),
-rechazando el supuesto de normalidad. Esto condiciona la elección de
-las pruebas inferenciales posteriores, que deben ser de tipo
+compatibilidad con la normalidad, mientras que valores pequeños y
+valores \(p\) inferiores al nivel de significancia conducen a rechazar
+el supuesto. Los resultados de esta prueba sobre \emph{Valor FOB (USD)}
+se presentan en la sección de Análisis exploratorio, junto con los
+gráficos Q-Q que permiten valorar visualmente el ajuste. Cuando el
+supuesto no se cumple, la elección de las pruebas inferenciales
+posteriores debe orientarse hacia alternativas de tipo
 \textbf{no paramétrico}.
 
 \subsection*{Lógica de las pruebas de hipótesis}
@@ -170,7 +214,7 @@ se rechaza.
 
 \subsection*{Prueba de Kruskal-Wallis}
 
-La prueba de Kruskal-Wallis \cite{kruskalwallis1952} es el equivalente
+La prueba de Kruskal-Wallis (Kruskal y Wallis, 1952) es el equivalente
 no paramétrico del ANOVA de un factor. Se utiliza para comparar si
 más de dos grupos independientes provienen de la misma distribución,
 sin asumir normalidad. En lugar de trabajar con los valores originales,
@@ -190,7 +234,7 @@ libertad. Se eligió esta prueba, en lugar de ANOVA, debido a que
 
 \subsection*{Correlación de Spearman}
 
-El coeficiente de correlación de Spearman \cite{spearman1904}, denotado
+El coeficiente de correlación de Spearman (Spearman, 1904), denotado
 \(\rho\), mide la fuerza y dirección de una relación \textbf{monótona}
 entre dos variables cuantitativas, sin asumir linealidad ni
 normalidad. Se calcula aplicando la fórmula de Pearson sobre los
@@ -205,6 +249,84 @@ observaciones y \(n\) el número de observaciones. El coeficiente toma
 valores entre \(-1\) y \(1\); valores cercanos a los extremos indican
 una relación monótona fuerte (positiva o negativa), mientras que
 valores cercanos a 0 indican ausencia de relación monótona.
+
+\subsection*{Bondad de ajuste y prueba chi-cuadrado}
+
+La prueba de bondad de ajuste contrasta si las frecuencias observadas de
+una variable categórica se corresponden con las frecuencias esperadas
+bajo una distribución teórica (Pearson, 1900). El estadístico se
+calcula como:
+
+\[
+\chi^2 = \sum_{j=1}^{k} \frac{(O_j - E_j)^2}{E_j}
+\]
+
+donde \(O_j\) y \(E_j\) son las frecuencias observada y esperada de la
+categoría \(j\), y \(k\) el número de categorías. Bajo \(H_0\), el
+estadístico sigue una distribución chi-cuadrado con \(k-1\) grados de
+libertad, siempre que todas las frecuencias esperadas sean al menos 5.
+Valores grandes de \(\chi^2\) indican que las frecuencias observadas se
+alejan de las esperadas y conducen a rechazar \(H_0\). En este proyecto
+la prueba se aplicó sobre \emph{Modo Transporte}, contrastando la
+hipótesis de que los cuatro modos aparecen con la misma frecuencia.
+
+\subsection*{Regresión lineal simple}
+
+La regresión lineal simple modela la relación entre una variable
+respuesta \(Y\) y una variable predictora \(X\) mediante:
+
+\[
+Y_i = \beta_0 + \beta_1 X_i + \varepsilon_i
+\]
+
+donde \(\beta_0\) es el intercepto, \(\beta_1\) la pendiente y
+\(\varepsilon_i\) el error aleatorio, que se supone con media cero,
+varianza constante (homocedasticidad), independencia y distribución
+normal (Montgomery y Runger, 2018). Los coeficientes se estiman por mínimos
+cuadrados ordinarios (MCO):
+
+\[
+\hat{\beta}_1 = \frac{\sum_{i=1}^{n} (X_i - \bar{X})(Y_i - \bar{Y})}
+{\sum_{i=1}^{n} (X_i - \bar{X})^2},
+\qquad
+\hat{\beta}_0 = \bar{Y} - \hat{\beta}_1 \bar{X}.
+\]
+
+La bondad del ajuste se mide con el coeficiente de determinación
+\(R^2 = 1 - SSE/SST\), que representa la proporción de la variabilidad
+de \(Y\) explicada por el modelo. La significancia de \(\hat{\beta}_1\)
+se contrasta con \(H_0: \beta_1 = 0\) frente a
+\(H_1: \beta_1 \neq 0\), mediante el estadístico
+\(t = \hat{\beta}_1 / EE(\hat{\beta}_1)\), que bajo \(H_0\) sigue una
+distribución \(t\) con \(n-2\) grados de libertad. La validez de esta
+inferencia depende de los supuestos sobre los residuos, que se revisan
+con una prueba de normalidad (Shapiro-Wilk) y una de varianza constante
+(Breusch-Pagan).
+
+\subsection*{Homocedasticidad y prueba de Breusch-Pagan}
+
+Otro de los supuestos del modelo de regresión es que la varianza de los
+errores es constante, condición conocida como \textbf{homocedasticidad}.
+Cuando no se cumple, los coeficientes estimados por MCO siguen siendo
+insesgados, pero sus errores estándar dejan de ser válidos y los
+contrastes de significancia pierden exactitud. La prueba de
+\textbf{Breusch-Pagan} (Breusch y Pagan, 1979) contrasta
+\(H_0:\) la varianza de los errores es constante frente a
+\(H_1:\) la varianza depende de las variables explicativas. Para
+aplicarla se estima el modelo, se obtienen los residuos
+\(\hat{\varepsilon}_i\), se elevan al cuadrado y se regresan sobre las
+variables explicativas:
+
+\[
+\hat{\varepsilon}_i^2 = \gamma_0 + \gamma_1 X_i + u_i .
+\]
+
+El estadístico \(LM = n R^2_{aux}\), donde \(R^2_{aux}\) es el
+coeficiente de determinación de esa regresión auxiliar, sigue bajo
+\(H_0\) una distribución chi-cuadrado con grados de libertad iguales al
+número de variables explicativas. Un valor \(p\) menor que \(\alpha\)
+indica evidencia de heterocedasticidad y obliga a interpretar con
+cautela los errores estándar o a recurrir a errores estándar robustos.
 
 \subsection*{Intervalos de confianza}
 
@@ -223,8 +345,6 @@ normal con error estándar \(\frac{1}{\sqrt{n-3}}\), lo cual permite
 construir el intervalo \(Z \pm 1.96 \times \text{EE}\) y revertirlo a
 la escala original de \(\rho\) mediante la función tangente hiperbólica
 inversa (\(\tanh\)).
-
-\newpage
 
 % ============================================================
 % 3. Metodología
@@ -418,7 +538,7 @@ las primeras cinco filas de la muestra de trabajo ya depurada.
 \subsection*{Técnicas inferenciales aplicadas}
 
 La Tabla~\ref{tab:tecnicas} resume las técnicas inferenciales
-seleccionadas para este avance y su justificación, derivada
+seleccionadas para este proyecto y su justificación, derivada
 directamente del supuesto de normalidad evaluado en la sección de
 Análisis exploratorio.
 
@@ -433,6 +553,9 @@ Análisis exploratorio.
         Shapiro-Wilk & Valor FOB (USD) & Verificar el supuesto de normalidad antes de elegir pruebas paramétricas o no paramétricas. \\
         Kruskal-Wallis & Valor FOB (USD) vs. Modo Transporte & Comparación de más de dos grupos independientes; no asume normalidad, a diferencia de ANOVA. \\
         Correlación de Spearman & Peso Neto (Kg) vs. Valor FOB (USD) & Mide la relación monótona entre variables cuantitativas sin asumir linealidad ni normalidad. \\
+        Regresión lineal simple & Peso Neto (Kg) $\rightarrow$ Valor FOB (USD) & Cuantifica la diferencia promedio asociada al peso y la proporción de variabilidad explicada ($R^2$). \\
+        Chi-cuadrado de bondad de ajuste & Modo Transporte & Contrasta si las frecuencias observadas de una variable categórica se ajustan a una distribución esperada. \\
+        Kruskal-Wallis para fletes & Fletes (USD) vs. Modo Transporte & Compara la distribución de los fletes entre modos sin asumir normalidad, dado el alto porcentaje de fletes en cero. \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -442,13 +565,13 @@ Análisis exploratorio.
 El análisis se desarrolló en \textbf{Python}, utilizando las
 siguientes librerías: \texttt{pandas} para manipulación de datos,
 \texttt{scipy.stats} para las pruebas estadísticas (\texttt{shapiro},
-\texttt{kruskal}, \texttt{spearmanr}), \texttt{numpy} para el cálculo
-del intervalo de confianza mediante la transformación de Fisher,
-\texttt{matplotlib} y \texttt{seaborn} para las visualizaciones. Las
-tablas del artículo se escribieron directamente en LaTeX, de modo que
-los resultados numéricos quedan como texto y no como imagen.
-
-\newpage
+\texttt{kruskal}, \texttt{spearmanr}, \texttt{chisquare}) y para los
+valores \(p\) de la regresión, \texttt{numpy} para la estimación del
+modelo por mínimos cuadrados y para el intervalo de confianza mediante
+la transformación de Fisher, y \texttt{matplotlib} y \texttt{seaborn}
+para las visualizaciones. Las tablas del artículo se escribieron
+directamente en LaTeX, de modo que los resultados numéricos quedan como
+texto y no como imagen.
 
 % ============================================================
 % 4. Análisis exploratorio (EDA)
@@ -472,6 +595,15 @@ depurada (1.106 registros). La Tabla~\ref{tab:estad_con} presenta los
 resultados sobre la muestra con outliers, mientras que la
 Tabla~\ref{tab:estad_sin} presenta los mismos estadísticos sobre la
 muestra sin outliers.
+
+Al ampliar el criterio IQR a tres variables (Valor FOB, Peso Neto y
+Cant. Unidades), la mejora en la forma de la distribución es
+considerable. La asimetría de \emph{Valor FOB (USD)} se reduce de
+\textbf{36.49} a \textbf{2.73}, y la de \emph{Peso Neto (Kg)} de
+\textbf{38.29} a \textbf{2.95}. La desviación estándar de
+\emph{Valor FOB (USD)} cae de \(916{,}701.21\) a \(4{,}675.58\),
+quedando en un orden de magnitud comparable al de su media
+(\(2{,}860.39\)).
 
 \begin{table}[htbp]
     \centering
@@ -519,15 +651,6 @@ muestra sin outliers.
 \end{table}
 \FloatBarrier
 
-Al ampliar el criterio IQR a tres variables (Valor FOB, Peso Neto y
-Cant. Unidades), la mejora en la forma de la distribución es
-considerable. La asimetría de \emph{Valor FOB (USD)} se reduce de
-\textbf{36.49} a \textbf{2.73}, y la de \emph{Peso Neto (Kg)} de
-\textbf{38.29} a \textbf{2.95}. La desviación estándar de
-\emph{Valor FOB (USD)} cae de \(916{,}701.21\) a \(4{,}675.58\),
-quedando en un orden de magnitud comparable al de su media
-(\(2{,}860.39\)).
-
 \subsection{Visualizaciones}
 
 Las Figuras~\ref{fig:hist_fob} y~\ref{fig:hist_peso} presentan los
@@ -536,13 +659,22 @@ con dos paneles: la muestra original a la izquierda y la muestra
 depurada a la derecha, de modo que el efecto del tratamiento de outliers
 se aprecia directamente en una misma escala.
 
+En los paneles izquierdos de ambas figuras, la totalidad de las
+observaciones se concentra en una única barra cercana a cero, porque un
+solo valor extremo obliga a comprimir la escala. Al excluir los outliers
+(paneles derechos), ambas distribuciones recuperan una forma
+interpretable: una alta concentración de exportaciones de bajo valor y
+peso, seguida de una cola derecha decreciente -- forma característica
+de una distribución log-normal, que respalda la estimación
+complementaria del modelo de regresión en escala logarítmica, reportada
+en la sección de Resultados.
+
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{anexos/histograma_valor_fob.png}
     \caption{Distribución de Valor FOB (USD): muestra con outliers (izquierda) y sin outliers (derecha).}
     \label{fig:hist_fob}
 \end{figure}
-\FloatBarrier
 
 \begin{figure}[htbp]
     \centering
@@ -552,42 +684,12 @@ se aprecia directamente en una misma escala.
 \end{figure}
 \FloatBarrier
 
-En los paneles izquierdos de ambas figuras, la totalidad de las
-observaciones se concentra en una única barra cercana a cero, porque un
-solo valor extremo obliga a comprimir la escala. Al excluir los outliers
-(paneles derechos), ambas distribuciones recuperan una forma
-interpretable: una alta concentración de exportaciones de bajo valor y
-peso, seguida de una cola derecha decreciente -- forma característica
-de una distribución log-normal, que respalda la recomendación de
-aplicar una transformación logarítmica en el modelo de regresión del
-Proyecto Final.
-
 \subsection{Verificación de normalidad}
 
 Como evidencia inicial del problema de normalidad, la
 Figura~\ref{fig:qqplot_normalidad} compara los gráficos Q-Q de la
 muestra de 1.500 registros antes de excluir valores atípicos (panel
 izquierdo) y de la muestra depurada de 1.106 registros (panel derecho).
-
-Tras la exclusión de los 394 outliers, se aplicó la prueba de
-Shapiro-Wilk sobre la muestra depurada de 1.106 registros:
-
-\begin{itemize}
-    \item Estadístico de prueba (\(W\)): \textbf{0.6277}
-    \item Valor \(p\): \textbf{\(1.24 \times 10^{-43}\)}
-\end{itemize}
-
-Como \(p = 1.24 \times 10^{-43} < \alpha = 0.05\), se \textbf{rechaza
-la hipótesis nula}:
-\emph{Valor FOB (USD)}, incluso tras el tratamiento de outliers,
-\textbf{no sigue una distribución normal}. La
-Figura~\ref{fig:qqplot_normalidad} respalda este resultado: en el panel
-izquierdo, un único punto extremo domina la escala y separa la nube de
-la línea de referencia; en el panel derecho ese punto desaparece, pero
-los cuantiles siguen desviándose de forma sistemática de la línea,
-coherente con la asimetría residual de \textbf{2.73}. Este resultado
-justifica el uso de pruebas \textbf{no paramétricas} (Kruskal-Wallis y
-correlación de Spearman) en la siguiente sección.
 
 \begin{figure}[htbp]
     \centering
@@ -597,7 +699,30 @@ correlación de Spearman) en la siguiente sección.
 \end{figure}
 \FloatBarrier
 
-\newpage
+Tras la exclusión de los 394 outliers, se aplicó la prueba de
+Shapiro-Wilk sobre \emph{Valor FOB (USD)} en las dos versiones de la
+muestra:
+
+\begin{itemize}
+    \item Muestra con outliers (\(n = 1\,500\)): \(W = 0.0247\),
+    \(p = 8.77 \times 10^{-66}\)
+    \item Muestra sin outliers (\(n = 1\,106\)): \(W = 0.6277\),
+    \(p = 1.24 \times 10^{-43}\)
+\end{itemize}
+
+En ambos casos \(p < \alpha = 0.05\), por lo que se \textbf{rechaza la
+hipótesis nula}:
+\emph{Valor FOB (USD)}, incluso tras el tratamiento de outliers,
+\textbf{no sigue una distribución normal}. El estadístico se acerca a 1
+después de excluir los valores atípicos (de 0.0247 a 0.6277), pero sigue
+lejos de la normalidad. La
+Figura~\ref{fig:qqplot_normalidad} respalda este resultado: en el panel
+izquierdo, un único punto extremo domina la escala y separa la nube de
+la línea de referencia; en el panel derecho ese punto desaparece, pero
+los cuantiles siguen desviándose de forma sistemática de la línea,
+coherente con la asimetría residual de \textbf{2.73}. Este resultado
+justifica el uso de pruebas \textbf{no paramétricas} (Kruskal-Wallis y
+correlación de Spearman) en la siguiente sección.
 
 % ============================================================
 % 5. Resultados
@@ -673,14 +798,6 @@ transporte difiere de los demás en términos de Valor FOB. La
 Figura~\ref{fig:boxplot_transporte} ilustra esta diferencia mediante un
 diagrama de cajas por grupo.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.66\textwidth]{anexos/boxplot_fob_por_transporte.png}
-    \caption{Valor FOB (USD) por Modo de Transporte.}
-    \label{fig:boxplot_transporte}
-\end{figure}
-\FloatBarrier
-
 El boxplot muestra que, entre los tres modos con mayor número de
 observaciones, \emph{Marítimo} presenta la mediana más alta, seguido de
 \emph{Terrestre} y \emph{Aéreo}, aunque los tres grupos conservan una
@@ -692,6 +809,14 @@ permite una comparación concluyente; su mediana es la más alta del
 gráfico, pero está calculada sobre dos registros y no presenta puntos
 marcados como atípicos, lo cual es resultado directo de su tamaño
 reducido y no de una menor variabilidad real.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.66\textwidth]{anexos/boxplot_fob_por_transporte.png}
+    \caption{Valor FOB (USD) por Modo de Transporte.}
+    \label{fig:boxplot_transporte}
+\end{figure}
+\FloatBarrier
 
 \subsection{Prueba 2: Correlación de Spearman -- Peso Neto y Valor FOB}
 
@@ -735,14 +860,6 @@ estadísticamente significativa entre el peso neto de la mercancía y
 su valor FOB. La Figura~\ref{fig:scatter_peso_fob} presenta el
 diagrama de dispersión correspondiente.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.75\textwidth]{anexos/scatter_peso_vs_fob.png}
-    \caption{Relación entre Peso Neto (Kg) y Valor FOB (USD).}
-    \label{fig:scatter_peso_fob}
-\end{figure}
-\FloatBarrier
-
 El diagrama de dispersión muestra una tendencia creciente consistente
 con el coeficiente obtenido: a mayor peso neto, el valor FOB tiende a
 ser mayor. Sin embargo, se observa una dispersión considerable,
@@ -751,9 +868,278 @@ coexisten exportaciones de muy bajo y muy alto valor -- un patrón
 coherente con mercancías de alto valor unitario y bajo peso (por
 ejemplo, productos electrónicos o flores) que se mezclan con
 mercancías de bajo valor y peso similar. Este hallazgo refuerza la
-decisión, planteada en el Análisis exploratorio, de aplicar una
-transformación logarítmica a \emph{Valor FOB (USD)} antes de construir
-el modelo de regresión lineal en el Proyecto Final.
+conveniencia de estimar, además del modelo lineal en escala original,
+una especificación logarítmica que se reporta como análisis de
+robustez en la sección de Resultados.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{anexos/scatter_peso_vs_fob.png}
+    \caption{Relación entre Peso Neto (Kg) y Valor FOB (USD).}
+    \label{fig:scatter_peso_fob}
+\end{figure}
+\FloatBarrier
+
+\subsection{Prueba 3: Regresión lineal simple -- Peso Neto y Valor FOB}
+
+El tercer objetivo específico busca determinar, mediante un modelo de
+regresión lineal simple, la relación entre el peso neto de la mercancía
+y su valor FOB. Se define como variable respuesta \emph{Valor FOB (USD)}
+y como variable predictora \emph{Peso Neto (Kg)}, ambas medidas sobre la
+muestra depurada de 1.106 registros. El contraste sobre la pendiente se
+plantea con \(\alpha = 0.05\):
+
+\begin{gather*}
+H_0:\ \beta_1 = 0 \quad \text{(no hay relación lineal entre el peso neto y el valor FOB)},\\
+H_1:\ \beta_1 \neq 0 \quad \text{(el peso neto se asocia con el valor FOB)}.
+\end{gather*}
+
+El modelo estimado, donde \(Y\) representa el \emph{Valor FOB (USD)} y
+\(X\) el \emph{Peso Neto (Kg)}, es:
+
+\[
+\hat{Y} = 1432.5486 + 3.3294\,X.
+\]
+
+El coeficiente \(\hat{\beta}_1 = 3.3294\) indica que, por cada kilogramo
+adicional de peso neto, se espera un aumento promedio de 3.33 USD en el
+valor FOB. El intercepto \(\hat{\beta}_0 = 1432.5486\) corresponde al
+valor esperado cuando el peso es cero; como ese valor está fuera del
+rango observado, no tiene interpretación sustantiva y solo ajusta el
+nivel de la recta. El coeficiente es estadísticamente significativo
+(\(t = 24.9202\); \(gl = 1\,104\); \(p = 4.08 \times 10^{-109}\)), por lo
+que se \textbf{rechaza la hipótesis nula}: existe una relación lineal
+positiva entre el peso neto y el valor FOB. El \(R^2 = 0.3600\) indica
+que el modelo explica el 36.00\,\% de la variabilidad del valor FOB;
+el 64.00\,\% restante se asocia con factores no incluidos en el modelo,
+como el tipo de producto, su valor unitario y el destino de la
+exportación. La Figura~\ref{fig:regresion_ajustada} muestra la nube de
+puntos y la recta ajustada que resume esta relación.
+
+Los coeficientes estimados por mínimos cuadrados ordinarios se presentan
+en la Tabla~\ref{tab:regresion} y el resumen del ajuste en la
+Tabla~\ref{tab:ajuste_regresion}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Coeficientes de la regresión lineal simple: Valor FOB (USD)
+    en función del Peso Neto (Kg).}
+    \label{tab:regresion}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{4.2cm}rrrr}
+        \toprule
+        Coeficiente & Estimación & Error estándar & $t$ & Valor $p$ \\
+        \midrule
+        Intercepto ($\hat{\beta}_0$) & 1432.5486 & 126.2713 & 11.3450 & $2.70 \times 10^{-28}$ \\
+        Peso Neto ($\hat{\beta}_1$) & 3.3294 & 0.1336 & 24.9202 & $4.08 \times 10^{-109}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resumen del ajuste del modelo de regresión lineal simple.}
+    \label{tab:ajuste_regresion}
+    \begin{tabular}{lr}
+        \toprule
+        Indicador & Valor \\
+        \midrule
+        $R^2$ & 0.3600 \\
+        $R^2$ ajustado & 0.3594 \\
+        Error estándar de la regresión & 3742.1441 \\
+        Observaciones & 1\,106 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+\FloatBarrier
+
+Los intervalos de confianza al 95\,\% para los coeficientes son
+\([1184.79,\ 1680.31]\) para el intercepto y
+\([3.0673,\ 3.5915]\) para la pendiente. Como el intervalo de
+\(\hat{\beta}_1\) no incluye el cero, la evidencia es consistente con el
+rechazo de \(H_0\) y con una asociación lineal positiva.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.82\textwidth]{anexos/regresion_peso_fob.png}
+    \caption{Recta de regresión ajustada por mínimos cuadrados
+    ordinarios: Valor FOB (USD) en función del Peso Neto (Kg).}
+    \label{fig:regresion_ajustada}
+\end{figure}
+\FloatBarrier
+
+Antes de aceptar la inferencia anterior se revisaron los supuestos sobre
+los residuos (Tabla~\ref{tab:diagnostico_regresion} y
+Figura~\ref{fig:diagnostico_residuos}). La prueba de Shapiro-Wilk rechaza
+la normalidad de los residuos (\(W = 0.6869\);
+\(p = 4.46 \times 10^{-41}\)) y la de Breusch-Pagan rechaza la
+homocedasticidad (\(BP = 103.5928\); \(gl = 1\);
+\(p = 2.48 \times 10^{-24}\)). En el panel izquierdo de la figura, la
+dispersión de los residuos crece con el valor ajustado -- forma de
+embudo característica de la heterocedasticidad -- y en el panel derecho
+los cuantiles se separan de la línea de referencia en ambos extremos.
+Estos resultados no invalidan las estimaciones de los coeficientes, que
+siguen siendo insesgadas bajo MCO, pero sí condicionan los errores
+estándar y los valores \(p\), que deben interpretarse como
+aproximaciones apoyadas en el tamaño de la muestra (\(n = 1.106\)).
+
+\begin{table}[htbp]
+    \centering
+    \caption{Diagnóstico de supuestos del modelo de regresión.}
+    \label{tab:diagnostico_regresion}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{5.4cm}
+                    >{\raggedright\arraybackslash}p{3.2cm}rr}
+        \toprule
+        Prueba & Estadístico & $gl$ & Valor $p$ \\
+        \midrule
+        Shapiro-Wilk sobre los residuos & $W = 0.6869$ & -- & $4.46 \times 10^{-41}$ \\
+        Breusch-Pagan (homocedasticidad) & $BP = 103.5928$ & 1 & $2.48 \times 10^{-24}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{anexos/diagnostico_residuos.png}
+    \caption{Diagnóstico de la regresión: residuos frente a valores
+    ajustados (izquierda) y gráfico Q-Q de los residuos (derecha).}
+    \label{fig:diagnostico_residuos}
+\end{figure}
+\FloatBarrier
+
+Como análisis de robustez se estimó el modelo en escala logarítmica
+(log-log): la elasticidad del valor respecto al peso es 0.6356 y el
+\(R^2\) asciende a 0.5674, lo que confirma la relación positiva y sugiere
+que el valor crece menos que proporcionalmente con el peso.
+
+
+\subsection{Prueba 4: Bondad de ajuste -- Modo de Transporte}
+
+Se contrastó si los cuatro modos de transporte aparecen con la misma
+frecuencia en la muestra depurada, mediante una prueba chi-cuadrado de
+bondad de ajuste con \(\alpha = 0.05\):
+
+\begin{gather*}
+H_0:\ \text{los cuatro modos de transporte tienen la misma frecuencia
+esperada},\\
+H_1:\ \text{al menos un modo presenta una frecuencia distinta}.
+\end{gather*}
+
+La Tabla~\ref{tab:bondad_frecuencias} compara las frecuencias observadas
+con las esperadas bajo \(H_0\) (1\,106/4 = 276.50 en cada modo) y la
+Tabla~\ref{tab:chi2_bondad} resume el contraste.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Frecuencias observadas y esperadas del Modo de Transporte.}
+    \label{tab:bondad_frecuencias}
+    \begin{tabular}{lrr}
+        \toprule
+        Modo de transporte & Frecuencia observada & Frecuencia esperada \\
+        \midrule
+        Aéreo & 547 & 276.50 \\
+        Marítimo & 414 & 276.50 \\
+        Terrestre (carretero) & 143 & 276.50 \\
+        Instalaciones Fijas & 2 & 276.50 \\
+        \midrule
+        Total & 1\,106 & 1\,106.00 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resultados de la prueba chi-cuadrado de bondad de ajuste.}
+    \label{tab:chi2_bondad}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.9cm}
+                    >{\raggedright\arraybackslash}p{10.1cm}}
+        \toprule
+        $H_0$ & Los cuatro modos de transporte tienen la misma frecuencia esperada \\
+        $H_1$ & Al menos un modo presenta una frecuencia distinta \\
+        \midrule
+        Estadístico $\chi^2$ & 669.9783 \\
+        Grados de libertad & 3 \\
+        Valor $p$ & $6.79 \times 10^{-145}$ \\
+        Nivel de significancia & $\alpha = 0.05$ \\
+        Decisión & Se rechaza $H_0$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+El estadístico \(\chi^2 = 669.9783\) con \(gl = 3\) y
+\(p = 6.79 \times 10^{-145}\) conduce a \textbf{rechazar la hipótesis
+nula}: los modos de transporte no se distribuyen de manera homogénea.
+El modo aéreo (547 registros) y el marítimo (414) concentran el
+86.89\,\% de los envíos, mientras que \emph{Instalaciones Fijas} aporta
+apenas 2 observaciones. Esta concentración condiciona la comparación de
+fletes que se presenta a continuación y explica por qué ese último grupo
+no permite generalizaciones.
+
+\subsection{Prueba 5: Kruskal-Wallis -- Fletes según Modo de Transporte}
+
+El cuarto objetivo específico compara los costos de flete según el modo
+de transporte. La Tabla~\ref{tab:fletes_modo} resume los fletes de la
+muestra depurada por modo. En los cuatro modos la mediana es cero,
+porque entre el 65.03\,\% y el 100\,\% de los registros reportan flete
+nulo; por eso la comparación se plantea sobre la distribución completa
+y no sobre los promedios. Se aplicó la prueba de Kruskal-Wallis con
+\(\alpha = 0.05\):
+
+\begin{gather*}
+H_0:\ \text{la distribución de Fletes (USD) es igual entre los modos de
+transporte},\\
+H_1:\ \text{al menos un modo difiere en la distribución de Fletes (USD)}.
+\end{gather*}
+
+El estadístico \(H = 4.7918\) (\(gl = 3\)) y el valor \(p = 0.188\) no
+permiten \textbf{rechazar la hipótesis nula}: no hay evidencia
+estadística de que la distribución de los fletes difiera entre los
+modos de transporte. Este resultado matiza la lectura descriptiva: el
+costo agregado por kilogramo sí es mucho mayor en el modo aéreo, como se
+muestra más adelante, pero esa diferencia no proviene de un cobro
+sistemáticamente mayor por envío, sino de la composición de la carga que
+se transporta por cada modo.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Estadísticos descriptivos de los fletes por modo de
+    transporte (muestra sin outliers).}
+    \label{tab:fletes_modo}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{4.6cm}rrrr}
+        \toprule
+        Modo de transporte & $n$ & Media (USD) & Mediana (USD) & Flete cero \\
+        \midrule
+        Aéreo & 547 & 81.09 & 0.00 & 74.22\,\% \\
+        Marítimo & 414 & 58.37 & 0.00 & 69.81\,\% \\
+        Terrestre (carretero) & 143 & 47.37 & 0.00 & 65.03\,\% \\
+        Instalaciones Fijas & 2 & 0.00 & 0.00 & 100.00\,\% \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resultados de la prueba de Kruskal-Wallis para los fletes.}
+    \label{tab:kruskal_fletes}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.9cm}
+                    >{\raggedright\arraybackslash}p{10.1cm}}
+        \toprule
+        $H_0$ & La distribución de Fletes (USD) es igual entre modos \\
+        $H_1$ & Al menos un modo difiere en la distribución de Fletes \\
+        \midrule
+        Estadístico $H$ & 4.7918 \\
+        Grados de libertad & 3 \\
+        Valor $p$ & 0.188 \\
+        Nivel de significancia & $\alpha = 0.05$ \\
+        Decisión & No se rechaza $H_0$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+\FloatBarrier
 
 \subsection{Complemento de los costos de flete, peso y modo de transporte}
 
@@ -776,7 +1162,7 @@ mercancía.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\textwidth]{anexos/flete_vs_peso_por_modo.png}
+    \includegraphics[width=0.68\textwidth]{anexos/flete_vs_peso_por_modo.png}
     \caption{Relación entre peso bruto y flete por modo de transporte (muestra sin outliers).}
     \label{fig:flete_peso_modo}
 \end{figure}
@@ -798,7 +1184,7 @@ efectivo.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\textwidth]{anexos/costo_kg_por_modo.png}
+    \includegraphics[width=0.68\textwidth]{anexos/costo_kg_por_modo.png}
     \caption{Costo de flete por kilogramo según modo de transporte.}
     \label{fig:costo_kg_modo}
 \end{figure}
@@ -817,13 +1203,12 @@ condicionada por los registros con flete igual a cero.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\textwidth]{anexos/flete_promedio_rango_peso.png}
+    \includegraphics[width=0.68\textwidth]{anexos/flete_promedio_rango_peso.png}
     \caption{Flete promedio según rango de peso bruto.}
     \label{fig:flete_rango_peso}
 \end{figure}
-\FloatBarrier
 
-\newpage
+\FloatBarrier
 
 % ============================================================
 % 6. Discusión
@@ -849,8 +1234,9 @@ el transporte marítimo presenta la mediana más alta, seguido del
 terrestre y del aéreo; la prueba de Kruskal-Wallis confirmó que al
 menos un modo difiere (\(H = 87.3240\), \(gl = 3\),
 \(p = 8.23 \times 10^{-19}\)).
-Este resultado indica que el modo importa, pero no identifica por sí
-mismo qué pares de modos difieren ni controla por tipo de mercancía.
+Este resultado indica que el modo de transporte se asocia con
+diferencias en el valor, pero no identifica por sí mismo qué pares de
+modos difieren ni controla por tipo de mercancía.
 
 En cuanto a los costos logísticos, el flete por kilogramo es mucho
 mayor en el modo aéreo (0.61 USD/kg) que en el marítimo y el terrestre
@@ -860,7 +1246,92 @@ unitario de los productos. Además, el flete debe interpretarse con
 cautela: depende de la urgencia, el tipo de producto, el destino y las
 condiciones contractuales, factores que no están en la base.
 
-\subsection{Limitaciones y uso de los resultados}
+El modelo de regresión lineal simple confirma la asociación y la
+cuantifica: por cada kilogramo adicional de peso neto el valor FOB
+aumenta en promedio 3.33 USD, y el modelo explica el 36.00\,\% de su
+variabilidad (\(R^2 = 0.3600\)). El coeficiente es significativo
+(\(t = 24.9202\); \(p = 4.08 \times 10^{-109}\)), pero los diagnósticos
+muestran residuos no normales y heterocedásticos, de modo que los
+errores estándar deben leerse como aproximaciones. La especificación
+log-log mejora el ajuste (\(R^2 = 0.5674\)) y arroja una elasticidad de
+0.6356: el valor crece con el peso, aunque menos que proporcionalmente,
+lo que es consistente con la presencia de mercancías de alto valor
+unitario y bajo peso.
+
+La bondad de ajuste del modo de transporte mostró que los envíos no se
+reparten por igual (\(\chi^2 = 669.9783\); \(gl = 3\);
+\(p = 6.79 \times 10^{-145}\)): el aéreo y el marítimo concentran el
+86.89\,\% de los registros. Esa concentración ayuda a interpretar la
+comparación de fletes: aunque el costo por kilogramo del modo aéreo sea
+cerca de nueve veces el de los otros modos, la distribución de los
+fletes no difiere significativamente entre modos
+(\(H = 4.7918\); \(p = 0.188\)). La diferencia de costo por kilogramo,
+entonces, se explica mejor por la composición de la carga -- envíos
+aéreos más livianos y de mayor valor unitario -- que por una tarifa
+sistemáticamente distinta.
+
+\subsection{Respuesta a la pregunta de investigación}
+
+La pregunta que orientó el estudio fue cómo se relaciona el peso de las
+mercancías con el valor FOB y los costos de flete en las exportaciones
+colombianas de junio de 2026. Los resultados permiten responderla en
+tres partes. Primero, el peso neto se relaciona de forma positiva,
+fuerte y estadísticamente significativa con el valor FOB
+(\(\rho = 0.7597\); \(p = 1.44 \times 10^{-208}\)), con una diferencia
+promedio de 3.33 USD por kilogramo adicional y un \(R^2\) de 0.36.
+Segundo, el valor FOB difiere según el modo de transporte
+(\(H = 87.3240\); \(p = 8.23 \times 10^{-19}\)) y los modos no se
+distribuyen de manera homogénea
+(\(\chi^2 = 669.9783\); \(p = 6.79 \times 10^{-145}\)). Tercero, el
+flete promedio aumenta con el rango de peso y el costo por kilogramo es
+mucho mayor en el modo aéreo, aunque la distribución de los fletes no
+difiere significativamente entre modos (\(p = 0.188\)). En conjunto, el
+peso es un predictor relevante del valor, pero insuficiente por sí solo:
+el tipo de producto, su valor unitario, el destino y el modo de
+transporte completan la explicación.
+
+\subsection{Comparación con la literatura}
+
+Los resultados son coherentes con la lógica de los registros aduaneros:
+el valor FOB se declara por mercancía y el peso es una de sus
+dimensiones básicas, de modo que ambas variables tienden a moverse
+juntas en las estadísticas oficiales de comercio exterior
+(DANE, 2026; DIAN, 2026). La magnitud del coeficiente de Spearman
+(\(\rho = 0.7597\)) corresponde a una asociación grande según los criterios
+convencionales para ciencias sociales (Cohen, 1988), lo que refuerza
+la relevancia práctica del hallazgo. En el plano metodológico, la
+evidencia de residuos no normales y heterocedásticos coincide con la
+advertencia de Montgomery y Runger (2018) sobre la necesidad de revisar
+los supuestos antes de interpretar los errores estándar y los valores
+\(p\) de un modelo de regresión; por ello el análisis se complementó con
+pruebas no paramétricas y con una especificación logarítmica. La
+concentración de los envíos en los modos aéreo y marítimo también es
+consistente con la estructura de la carga exportada que reportan las
+fuentes oficiales (DANE, 2026).
+
+\subsection{Implicaciones para la toma de decisiones}
+
+Para las empresas exportadoras, el modelo ofrece una referencia simple:
+cada kilogramo adicional se asocia, en promedio, con 3.33 USD más de
+valor declarado, de modo que el peso puede usarse como primera
+aproximación en la planeación de embarques y en la estimación de costos
+logísticos. Sin embargo, el \(R^2\) de 0.36 y la dispersión observada en
+pesos bajos indican que el peso no basta para predecir el valor: las
+decisiones de empaque, consolidación de carga y elección del modo de
+transporte deben considerar el tipo de producto y su valor unitario.
+
+Para el sector público, la concentración de los envíos en dos modos y
+la heterogeneidad del costo por kilogramo sugieren que las políticas de
+facilitación logística pueden enfocarse en la carga aérea, donde el
+costo por kilogramo es más alto, sin perder de vista que la
+distribución de los fletes no difiere significativamente entre modos.
+Finalmente, la alta proporción de registros con flete cero (71.4\,\%)
+plantea una alerta sobre la calidad del dato: conviene revisar si esos
+ceros corresponden a envíos sin costo de flete o a registros
+incompletos, porque de ello depende la confiabilidad de cualquier
+estimación de costos.
+
+\subsection{Limitaciones del estudio}
 
 El análisis se realizó sobre una muestra aleatoria de 1.500 registros,
 depurada hasta 1.106 observaciones tras excluir valores atípicos en
@@ -884,81 +1355,157 @@ distribución normal incluso después del tratamiento de outliers, por
 lo que las pruebas no paramétricas son apropiadas, pero las
 conclusiones deben limitarse a asociación y no a causalidad.
 
-\newpage
+En el modelo de regresión, los residuos no cumplen los supuestos de
+normalidad ni de homocedasticidad, de modo que los errores estándar y
+los valores \(p\) son aproximaciones y no inferencias exactas; una
+alternativa sería estimar errores estándar robustos a la
+heterocedasticidad. Además, el modelo incluye una sola variable
+predictora y se estimó sobre la muestra depurada, por lo que sus
+coeficientes describen la relación en ese subconjunto y no deben
+extrapolarse a envíos de gran escala ni interpretarse como relaciones
+causales.
 
 % ============================================================
 % 7. Conclusiones
 % ============================================================
 \section{Conclusiones}
 
-El análisis permitió identificar una relación positiva y fuerte entre
-el peso neto y el valor FOB: el coeficiente de Spearman
-(\(\rho = 0.7597\), \(p = 1.44 \times 10^{-208}\)) fue
-estadísticamente significativo, lo que indica que, en los datos, las
-mercancías de mayor peso tienden a registrar mayor valor, aunque con
-una dispersión considerable.
+El desarrollo del proyecto permite responder la pregunta de
+investigación y sintetizar los hallazgos en correspondencia con cada
+objetivo específico.
 
-La prueba de Kruskal-Wallis encontró diferencias significativas en el
-\emph{Valor FOB (USD)} según el modo de transporte
-(\(H = 87.3240\), \(gl = 3\), \(p = 8.23 \times 10^{-19}\)). Entre los
-grupos con tamaño suficiente, el modo marítimo presentó la mediana más
-alta,
-seguido del terrestre y del aéreo. En cuanto a los fletes, el costo por
-kilogramo del modo aéreo (0.61 USD/kg) fue cerca de nueve veces el del
-marítimo y el terrestre (0.07 USD/kg), y el flete promedio aumentó con
-el rango de peso, aunque en menor proporción que el peso transportado.
+\textbf{Caracterización de las variables.} El archivo original de la
+DIAN reúne 103.179 registros y 72 variables, de las cuales 44 son
+numéricas y 28 categóricas o de texto. Tras el muestreo aleatorio y la
+exclusión de 394 valores atípicos mediante el rango intercuartílico, la
+muestra final quedó en 1.106 registros. En ella, el Valor FOB promedio
+fue de 2\,860.39 USD con mediana de 959.00 USD, y el Peso Neto promedio
+de 428.85 kg con mediana de 83.00 kg; la fuerte asimetría de ambas
+variables (2.73 y 2.95) describe un conjunto dominado por envíos
+pequeños y unos pocos envíos de gran escala.
 
-Estos hallazgos deben leerse con cautela: la variable \emph{Valor FOB
-(USD)} no sigue una distribución normal, se retiraron valores atípicos
-que representan el 26.27\,\% de la muestra, la proporción de registros
-con flete cero es alta y el grupo \emph{Instalaciones Fijas} tiene solo
-dos observaciones. Por ello, los resultados describen la muestra
-analizada y no necesariamente a todos los exportadores, en especial a
-los de mayor escala.
+\textbf{Supuesto de normalidad.} La prueba de Shapiro-Wilk aplicada al
+Valor FOB arrojó \(W = 0.0247\) (\(p = 8.77 \times 10^{-66}\)) en la
+muestra con outliers y \(W = 0.6277\) (\(p = 1.24 \times 10^{-43}\)) en
+la muestra depurada, por lo que se rechazó la normalidad antes y
+después del tratamiento. Este resultado justificó el uso de pruebas no
+paramétricas (Kruskal-Wallis y Spearman) y de un modelo de regresión
+cuyos supuestos se revisaron de forma explícita.
 
-Como trabajo futuro, se recomienda evaluar modelos de regresión
-logarítmica para formalizar la relación entre peso y valor, ampliar la
-muestra o usar la población completa para reducir la pérdida de
-información, revisar el significado de los registros con flete cero y
-aplicar pruebas post hoc para identificar qué pares de modos difieren.
-Esto permitirá mejorar la estimación de los costos de transporte y la
-interpretación de los resultados.
+\textbf{Asociación entre peso neto y valor FOB.} El modelo de regresión
+lineal simple estimó un intercepto de 1\,432.5486 USD y una pendiente de
+3.3294 USD por kilogramo (\(EE = 0.1336\); \(t = 24.9202\);
+\(gl = 1\,104\); \(p = 4.08 \times 10^{-109}\)), con
+\(R^2 = 0.3600\). Es decir, cada kilogramo adicional se asocia en
+promedio con 3.33 USD más de valor FOB, y el modelo explica el 36.00\,\%
+de la variabilidad del valor. Esta evidencia es de naturaleza
+asociativa: el modelo cuantifica cómo cambia el valor junto con el peso,
+pero no permite afirmar que el peso sea la causa del valor declarado.
+El resultado es consistente con la
+correlación de Spearman (\(\rho = 0.7597\);
+\(p = 1.44 \times 10^{-208}\)) y con la elasticidad de 0.6356 del
+modelo log-log, que mejoró el ajuste (\(R^2 = 0.5674\)).
+
+\textbf{Comparación de fletes por modo de transporte.} El costo
+agregado por kilogramo fue de 0.61 USD/kg en el modo aéreo frente a
+0.07 USD/kg en el marítimo y el terrestre, cerca de nueve veces mayor,
+y el flete promedio aumentó con el rango de peso. Sin embargo, la
+prueba de Kruskal-Wallis no encontró diferencias significativas en la
+distribución de los fletes entre modos (\(H = 4.7918\); \(gl = 3\);
+\(p = 0.188\)), y la bondad de ajuste confirmó que los envíos se
+concentran en los modos aéreo y marítimo
+(\(\chi^2 = 669.9783\); \(gl = 3\); \(p = 6.79 \times 10^{-145}\)).
+Por ello, la diferencia de costo por kilogramo es consistente con la
+composición de la carga más que con tarifas sistemáticamente distintas.
+
+En síntesis, el peso neto es un predictor relevante pero insuficiente
+del valor exportado: explica poco más de un tercio de su variabilidad,
+mientras que el modo de transporte, el tipo de producto y su valor
+unitario completan la explicación. Estos hallazgos deben leerse con las
+limitaciones señaladas -- muestra depurada de outliers, alta proporción
+de fletes en cero y supuestos de regresión no satisfechos --, que
+delimitan su alcance a la asociación y no a la causalidad.
+
+Como trabajo futuro se recomienda ampliar la muestra o usar la
+población completa, estimar errores estándar robustos, incorporar
+variables adicionales en un modelo múltiple, revisar el significado de
+los registros con flete cero y aplicar pruebas post hoc para
+identificar qué pares de modos difieren.
+
+\newpage
+
+% ============================================================
+% Declaración de uso de inteligencia artificial
+% ============================================================
+\section*{Declaración de uso de inteligencia artificial}
+
+Para el desarrollo de este artículo se utilizó el modelo de lenguaje
+\textbf{DeepSeek V4.1} como apoyo en la generación y depuración del
+código de Python empleado en el análisis de datos y en la redacción del
+código LaTeX que estructura el documento. La herramienta también se usó
+para sugerir ideas de organización y redacción; sin embargo, la
+formulación del problema, el diseño metodológico, la selección de las
+pruebas, la interpretación de los resultados y todas las decisiones del
+proyecto fueron tomadas por los autores, quienes verificaron los
+cálculos y asumen la responsabilidad sobre el contenido final.
 
 \newpage
 
 % ============================================================
 % Referencias
 % ============================================================
-\section*{Referencias}
-
+\renewcommand{\refname}{Referencias}
+\makeatletter
+\renewcommand{\@biblabel}[1]{}
+\makeatother
 \begin{thebibliography}{99}
 
-\bibitem{dian2026}
-Dirección de Impuestos y Aduanas Nacionales - DIAN. (2026).
-\emph{Estadísticas de comercio exterior - Exportaciones (junio 2026)}.
-Recuperado de \url{https://www.dian.gov.co/dian/cifras/Paginas/Bases-Estadisticas-de-Comercio-Exterior-Importaciones-y-Exportaciones.aspx}
+\bibitem{breuschpagan1979}
+Breusch, T. S., \& Pagan, A. R. (1979).
+A simple test for heteroscedasticity and random coefficient variation.
+\emph{Econometrica}, \emph{47}(5), 1287--1294.
+\url{https://doi.org/10.2307/1911963}
+
+\bibitem{cohen1988}
+Cohen, J. (1988).
+\emph{Statistical power analysis for the behavioral sciences} (2nd ed.).
+Lawrence Erlbaum Associates.
 
 \bibitem{dane2026}
 Departamento Administrativo Nacional de Estadística - DANE. (2026).
 \emph{Comercio exterior: Metodología y validación de estadísticas de exportaciones}.
 Recuperado de \url{https://www.dane.gov.co}
 
-\bibitem{montgomery2018}
-Montgomery, D. C., \& Runger, G. C. (2018).
-\emph{Applied statistics and probability for engineers} (7th ed.).
-Wiley.
-
-\bibitem{shapirowilk1965}
-Shapiro, S. S., \& Wilk, M. B. (1965).
-An analysis of variance test for normality (complete samples).
-\emph{Biometrika}, \emph{52}(3/4), 591--611.
-\url{https://doi.org/10.2307/2333709}
+\bibitem{dian2026}
+Dirección de Impuestos y Aduanas Nacionales - DIAN. (2026).
+\emph{Estadísticas de comercio exterior - Exportaciones (junio 2026)}.
+Recuperado de \url{https://www.dian.gov.co/dian/cifras/Paginas/Bases-Estadisticas-de-Comercio-Exterior-Importaciones-y-Exportaciones.aspx}
 
 \bibitem{kruskalwallis1952}
 Kruskal, W. H., \& Wallis, W. A. (1952).
 Use of ranks in one-criterion variance analysis.
 \emph{Journal of the American Statistical Association}, \emph{47}(260), 583--621.
 \url{https://doi.org/10.1080/01621459.1952.10483441}
+
+\bibitem{montgomery2018}
+Montgomery, D. C., \& Runger, G. C. (2018).
+\emph{Applied statistics and probability for engineers} (7th ed.).
+Wiley.
+
+\bibitem{pearson1900}
+Pearson, K. (1900).
+On the criterion that a given system of deviations from the probable in
+the case of a correlated system of variables is such that it can be
+reasonably supposed to have arisen from random sampling.
+\emph{The London, Edinburgh, and Dublin Philosophical Magazine and
+Journal of Science}, \emph{50}(302), 157--175.
+\url{https://doi.org/10.1080/14786440009463897}
+
+\bibitem{shapirowilk1965}
+Shapiro, S. S., \& Wilk, M. B. (1965).
+An analysis of variance test for normality (complete samples).
+\emph{Biometrika}, \emph{52}(3/4), 591--611.
+\url{https://doi.org/10.2307/2333709}
 
 \bibitem{spearman1904}
 Spearman, C. (1904).

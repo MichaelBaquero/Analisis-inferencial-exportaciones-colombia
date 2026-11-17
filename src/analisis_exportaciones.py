@@ -1,6 +1,7 @@
 # ============================================================
 # Proyecto Integrador - Analítica Descriptiva II
-# Avances 1 y 2: EDA e inferencia - Exportaciones Colombia (DIAN, Junio 2026)
+# EDA, inferencia, bondad de ajuste y regresión lineal simple
+# Exportaciones Colombia (DIAN, Junio 2026)
 # Fuente: https://www.dian.gov.co/dian/cifras/Paginas/EstadisticasComEx.aspx
 # Fecha de descarga del archivo: 12/08/2026
 # Equipo: Angie Montero, Michael Baquero
@@ -15,6 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import shapiro, probplot, skew, kruskal, spearmanr
+from scipy.stats import chisquare, chi2, t as t_dist
 
 # ------------------------------------------------------------
 # Rutas del proyecto
@@ -317,6 +319,16 @@ print(f"\nRegistros válidos para la prueba: {len(variable)}")
 
 estadistico_w, p_valor = shapiro(variable)
 
+# La misma prueba se aplica sobre la muestra inicial (con outliers), de
+# modo que el artículo pueda comparar el estadístico antes y después del
+# tratamiento.
+variable_con_outliers = df_muestra['Valor FOB (USD)'].dropna()
+w_con_outliers, p_con_outliers = shapiro(variable_con_outliers)
+print(f"Shapiro-Wilk con outliers: W = {w_con_outliers:.4f}, "
+      f"valor p = {formatear_p(p_con_outliers)}")
+print(f"Shapiro-Wilk sin outliers: W = {estadistico_w:.4f}, "
+      f"valor p = {formatear_p(p_valor)}")
+
 # El valor p se reporta de forma exacta: con tres decimales cuando es
 # mayor o igual a 0.001 y en notación científica cuando es menor, de
 # modo que el artículo y la salida del script coincidan.
@@ -495,6 +507,221 @@ plt.savefig(ruta_anexo("scatter_peso_vs_fob.png"), dpi=300)
 plt.close()
 
 # ------------------------------------------------------------
+# Resultados: regresión lineal simple (Peso Neto -> Valor FOB)
+# ------------------------------------------------------------
+# Se estima por mínimos cuadrados ordinarios la recta
+# Valor FOB = beta0 + beta1 * Peso Neto. Los errores estándar, el
+# estadístico t y los valores p se obtienen con las fórmulas cerradas
+# del modelo, de modo que el script solo dependa de numpy, pandas,
+# scipy y matplotlib.
+
+x = df_muestra_clean['Peso Neto (Kg)'].to_numpy(dtype=float)
+y = df_muestra_clean['Valor FOB (USD)'].to_numpy(dtype=float)
+n_reg = len(x)
+
+x_media, y_media = x.mean(), y.mean()
+sxx = ((x - x_media) ** 2).sum()
+sxy = ((x - x_media) * (y - y_media)).sum()
+
+beta1 = sxy / sxx
+beta0 = y_media - beta1 * x_media
+
+residuos = y - (beta0 + beta1 * x)
+gl_residuos = n_reg - 2
+sse = (residuos ** 2).sum()
+sst = ((y - y_media) ** 2).sum()
+mse = sse / gl_residuos
+
+r2 = 1 - sse / sst
+r2_ajustado = 1 - (1 - r2) * (n_reg - 1) / gl_residuos
+
+ee_beta0 = np.sqrt(mse * (1 / n_reg + x_media ** 2 / sxx))
+ee_beta1 = np.sqrt(mse / sxx)
+t_beta0 = beta0 / ee_beta0
+t_beta1 = beta1 / ee_beta1
+p_beta0 = 2 * t_dist.sf(abs(t_beta0), gl_residuos)
+p_beta1 = 2 * t_dist.sf(abs(t_beta1), gl_residuos)
+
+# Intervalos de confianza al 95% para los coeficientes, con el valor
+# crítico de la distribución t y los grados de libertad de los residuos.
+t_critico_reg = t_dist.ppf(0.975, gl_residuos)
+ic_beta0 = (beta0 - t_critico_reg * ee_beta0,
+            beta0 + t_critico_reg * ee_beta0)
+ic_beta1 = (beta1 - t_critico_reg * ee_beta1,
+            beta1 + t_critico_reg * ee_beta1)
+
+print("\n--- Regresión lineal simple: Valor FOB ~ Peso Neto ---")
+print(f"beta0 = {beta0:.4f} | beta1 = {beta1:.4f}")
+print(f"R2 = {r2:.4f} | R2 ajustado = {r2_ajustado:.4f}")
+print(f"Error estándar de la regresión: {np.sqrt(mse):.4f}")
+print(f"Valor p de beta0: {formatear_p(p_beta0)}")
+print(f"Valor p de beta1: {formatear_p(p_beta1)}")
+print(f"IC 95% beta0: [{ic_beta0[0]:.4f}, {ic_beta0[1]:.4f}]")
+print(f"IC 95% beta1: [{ic_beta1[0]:.4f}, {ic_beta1[1]:.4f}]")
+
+# Tabla de coeficientes del modelo.
+tabla_regresion = pd.DataFrame({
+    "Coeficiente": ["Intercepto (beta0)", "Peso Neto (beta1)"],
+    "Estimación": [f"{beta0:.4f}", f"{beta1:.4f}"],
+    "Error estándar": [f"{ee_beta0:.4f}", f"{ee_beta1:.4f}"],
+    "Estadístico t": [f"{t_beta0:.4f}", f"{t_beta1:.4f}"],
+    "Valor p": [formatear_p(p_beta0), formatear_p(p_beta1)],
+    "IC 95%": [f"[{ic_beta0[0]:.4f}, {ic_beta0[1]:.4f}]",
+               f"[{ic_beta1[0]:.4f}, {ic_beta1[1]:.4f}]"]
+})
+print("\n--- Tabla: coeficientes de la regresión ---")
+print(tabla_regresion.to_string(index=False))
+
+# Tabla resumen del ajuste.
+tabla_ajuste = pd.DataFrame({
+    "Indicador": [
+        "R2",
+        "R2 ajustado",
+        "Error estándar de la regresión",
+        "Observaciones"
+    ],
+    "Valor": [
+        f"{r2:.4f}",
+        f"{r2_ajustado:.4f}",
+        f"{np.sqrt(mse):.4f}",
+        f"{n_reg}"
+    ]
+})
+print("\n--- Tabla: resumen del ajuste ---")
+print(tabla_ajuste.to_string(index=False))
+
+# Visualización: nube de puntos con la recta ajustada por MCO. El panel
+# izquierdo conserva la escala completa y el derecho amplía la zona de
+# mayor densidad (peso <= 1.000 kg, valor <= 12.000 USD), donde se
+# concentra la mayor parte de la muestra.
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+y_ajustado = beta0 + beta1 * x
+
+for ax in (ax1, ax2):
+    ax.scatter(x, y, alpha=0.35, s=22, color="#4C72B0",
+               label="Observaciones")
+    orden = np.argsort(x)
+    ax.plot(x[orden], y_ajustado[orden], color="#C44E52", linewidth=2,
+            label="Recta ajustada")
+    ax.set_xlabel("Peso Neto (Kg)", fontsize=11)
+    ax.set_ylabel("Valor FOB (USD)", fontsize=11)
+    ax.grid(alpha=0.3)
+
+ax1.set_title("Escala completa", fontsize=12)
+ax1.text(0.03, 0.96,
+         f"$\\hat{{Y}} = {beta0:.4f} + {beta1:.4f}\\,X$\n$R^2 = {r2:.4f}$",
+         transform=ax1.transAxes, fontsize=10, va="top",
+         bbox=dict(boxstyle="round", facecolor="white", alpha=0.85))
+ax1.legend(loc="lower right", fontsize=9)
+
+ax2.set_title("Ampliación: peso $\\leq$ 1.000 kg y valor $\\leq$ 12.000 USD",
+              fontsize=12)
+ax2.set_xlim(0, 1000)
+ax2.set_ylim(0, 12000)
+
+fig.suptitle("Regresión lineal simple: Valor FOB (USD) ~ Peso Neto (Kg)",
+             fontsize=13)
+plt.tight_layout()
+exportar_imagen(ruta_anexo("regresion_peso_fob.png"))
+plt.savefig(ruta_anexo("regresion_peso_fob.png"), dpi=300)
+plt.close()
+
+# Diagnóstico de supuestos. La normalidad de los residuos se contrasta
+# con Shapiro-Wilk y la homocedasticidad con la prueba de Breusch-Pagan,
+# calculada a partir de la regresión auxiliar de los residuos al cuadrado
+# sobre la variable predictora.
+w_residuos, p_residuos = shapiro(residuos)
+
+residuos2 = residuos ** 2
+beta1_aux = ((x - x_media) * (residuos2 - residuos2.mean())).sum() / sxx
+residuos2_ajustado = residuos2.mean() + beta1_aux * (x - x_media)
+sse_aux = ((residuos2 - residuos2_ajustado) ** 2).sum()
+sst_aux = ((residuos2 - residuos2.mean()) ** 2).sum()
+r2_aux = 1 - sse_aux / sst_aux
+bp = n_reg * r2_aux
+p_bp = chi2.sf(bp, 1)
+
+print("\n--- Diagnóstico de los residuos ---")
+print(f"Shapiro-Wilk: W = {w_residuos:.4f}, valor p = {formatear_p(p_residuos)}")
+print(f"Breusch-Pagan: BP = {bp:.4f}, gl = 1, valor p = {formatear_p(p_bp)}")
+
+tabla_diagnostico = pd.DataFrame({
+    "Prueba": ["Shapiro-Wilk (residuos)", "Breusch-Pagan (homocedasticidad)"],
+    "Estadístico": [f"W = {w_residuos:.4f}", f"BP = {bp:.4f}"],
+    "Grados de libertad": ["--", "1"],
+    "Valor p": [formatear_p(p_residuos), formatear_p(p_bp)]
+})
+print("\n--- Tabla: diagnóstico de supuestos ---")
+print(tabla_diagnostico.to_string(index=False))
+
+# Análisis de robustez: modelo log-log (elasticidad), sugerido por la
+# forma log-normal observada en el análisis exploratorio. Se excluyen
+# los registros con peso o valor iguales a cero, para los que el
+# logaritmo no está definido.
+mask_log = (x > 0) & (y > 0)
+lx, ly = np.log(x[mask_log]), np.log(y[mask_log])
+beta1_log = (((lx - lx.mean()) * (ly - ly.mean())).sum()
+             / ((lx - lx.mean()) ** 2).sum())
+beta0_log = ly.mean() - beta1_log * lx.mean()
+residuos_log = ly - (beta0_log + beta1_log * lx)
+r2_log = 1 - (residuos_log ** 2).sum() / ((ly - ly.mean()) ** 2).sum()
+
+print("\n--- Robustez: modelo log-log (elasticidad) ---")
+print(f"Observaciones: {int(mask_log.sum())}")
+print(f"beta1 (elasticidad) = {beta1_log:.4f} | R2 = {r2_log:.4f}")
+
+# Visualización: residuos frente a valores ajustados y gráfico Q-Q de
+# los residuos, para revisar homocedasticidad y normalidad.
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+ax1.scatter(beta0 + beta1 * x, residuos, alpha=0.4, color="#4C72B0", s=25)
+ax1.axhline(0, color="black", linewidth=1)
+ax1.set_title("Residuos vs. valores ajustados", fontsize=12)
+ax1.set_xlabel("Valor ajustado (USD)", fontsize=11)
+ax1.set_ylabel("Residuo (USD)", fontsize=11)
+ax1.grid(alpha=0.3)
+probplot(residuos, dist="norm", plot=ax2)
+ax2.set_title("Q-Q de los residuos", fontsize=12)
+ax2.set_xlabel("Cuantiles teóricos (normal)", fontsize=11)
+ax2.set_ylabel("Cuantiles muestrales", fontsize=11)
+ax2.grid(alpha=0.3)
+ax2.get_lines()[0].set_markersize(4)
+fig.suptitle("Diagnóstico de la regresión: Valor FOB (USD) ~ Peso Neto (Kg)",
+             fontsize=13)
+plt.tight_layout()
+exportar_imagen(ruta_anexo("diagnostico_residuos.png"))
+plt.savefig(ruta_anexo("diagnostico_residuos.png"), dpi=300)
+plt.close()
+
+# ------------------------------------------------------------
+# Resultados: bondad de ajuste (chi-cuadrado)
+# ------------------------------------------------------------
+# Se contrasta si los cuatro modos de transporte tienen la misma
+# frecuencia esperada en la muestra depurada. La prueba chi-cuadrado
+# exige frecuencias esperadas de al menos 5 por categoría.
+conteo_modo = df_muestra_clean['Modo Transporte'].value_counts()
+frecuencia_observada = conteo_modo.to_numpy()
+frecuencia_esperada = np.full(len(frecuencia_observada),
+                              frecuencia_observada.sum() / len(frecuencia_observada))
+chi2_gof, p_gof = chisquare(frecuencia_observada, frecuencia_esperada)
+gl_gof = len(frecuencia_observada) - 1
+
+print("\n--- Bondad de ajuste: chi-cuadrado para Modo de Transporte ---")
+print(f"Chi-cuadrado = {chi2_gof:.4f}, gl = {gl_gof}, "
+      f"valor p = {formatear_p(p_gof)}")
+print(f"Frecuencia esperada por modo: {frecuencia_esperada[0]:.2f}")
+
+tabla_bondad = pd.DataFrame({
+    "Modo de transporte": conteo_modo.index,
+    "Frecuencia observada": frecuencia_observada,
+    "Frecuencia esperada": np.round(frecuencia_esperada, 2)
+})
+print("\n--- Tabla: bondad de ajuste por modo de transporte ---")
+print(tabla_bondad.to_string(index=False))
+print(f"\nEstadístico chi-cuadrado: {chi2_gof:.4f}")
+print(f"Grados de libertad: {gl_gof}")
+print(f"Valor p: {formatear_p(p_gof)}")
+
+# ------------------------------------------------------------
 # Resultados complementarios: costos de flete (secciones 5.3-5.5)
 # ------------------------------------------------------------
 # El flete se analiza con Peso Bruto (Kg), porque el transportador
@@ -562,6 +789,46 @@ registro_max = df_muestra_clean.loc[flete.idxmax()]
 print("\nRegistro con el flete más alto:")
 print(registro_max[['Fletes (USD)', 'Peso Neto (Kg)',
                     'Peso Bruto (Kg)', 'Modo Transporte']].to_string())
+
+# Prueba de Kruskal-Wallis: comparación de los fletes entre modos de
+# transporte (objetivo específico 4). Se contrasta si la distribución
+# de Fletes (USD) es la misma en los cuatro modos.
+grupos_flete = [grupo['Fletes (USD)'].to_numpy()
+                for _, grupo in df_muestra_clean.groupby('Modo Transporte')]
+estadistico_h_flete, p_valor_flete = kruskal(*grupos_flete)
+gl_flete = len(grupos_flete) - 1
+
+print("\n--- Kruskal-Wallis: Fletes (USD) según Modo de Transporte ---")
+print(f"Estadístico H: {estadistico_h_flete:.4f}")
+print(f"Valor p: {formatear_p(p_valor_flete)}")
+
+# Resumen descriptivo de los fletes por modo, que acompaña la prueba.
+resumen_flete_modo = (
+    df_muestra_clean.groupby('Modo Transporte')['Fletes (USD)']
+    .agg(n='size', media='mean', mediana='median',
+         pct_cero=lambda s: 100 * (s == 0).mean())
+    .round(2)
+)
+print("\n--- Tabla: fletes por modo de transporte ---")
+print(resumen_flete_modo.to_string())
+
+tabla_kruskal_flete = pd.DataFrame({
+    "Elemento": ["H0", "H1", "Estadístico (H)", "Grados de libertad",
+                 "Valor p", "Nivel de significancia (alfa)", "Decisión"],
+    "Valor": [
+        "La distribución de Fletes (USD) es igual entre modos de transporte",
+        "Al menos un modo de transporte difiere en Fletes (USD)",
+        f"{estadistico_h_flete:.4f}",
+        f"{gl_flete}",
+        formatear_p(p_valor_flete),
+        f"{alfa}",
+        ("NO se rechaza H0. No hay evidencia de diferencias en fletes entre modos."
+         if p_valor_flete > alfa else
+         "SE RECHAZA H0. Existe evidencia de que al menos un modo difiere en Fletes (USD).")
+    ]
+})
+print("\n--- Tabla: Kruskal-Wallis para fletes ---")
+print(tabla_kruskal_flete.to_string(index=False))
 
 # ------------------------------------------------------------
 # Visualizaciones de los costos de flete (secciones 5.3-5.5)
